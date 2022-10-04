@@ -1,2 +1,0 @@
-include versioneer.py
-include prefect_meemoo/_version.py
