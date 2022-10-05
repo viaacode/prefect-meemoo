@@ -15,7 +15,7 @@ from mediahaven.oauth2 import ROPCGrant, RequestTokenError
 '''
 
 @task
-def update_metadata(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
+def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
     '''
     Update metadata of a fragment.
 
@@ -41,7 +41,7 @@ def update_metadata(client: MediaHaven, fragment_id, xml=None, json=None) -> boo
         return resp
 
 @task()
-def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, str]]) -> dict:
+def generate_mediahaven_json(client : MediaHaven, field_value: dict) -> dict:
     '''
     Generate a json object that can be used to update metadata in MediaHaven
 
@@ -60,7 +60,7 @@ def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, s
         field_definitions = {}
     # Generate the JSON
     json_dict = {'Metadata': {}}
-    for field, value in field_value:
+    for field, value in field_value.items():
         # Save the field definition in JSON block if it is not there yet
         if field not in field_definitions:
             field_definitions[field] = get_field_definition.fn(client, field)
@@ -154,17 +154,15 @@ def get_client(block_name_prefix: str) -> MediaHaven:
     client = MediaHaven(url, grant)
     return client
 
-
 @task()
-def single_value_metadata_update(client : MediaHaven, fragment_id: str, field: str, value,) -> bool:
+def fragment_metadata_update(client : MediaHaven, fragment_id : str, field_value_dict : dict,) -> bool:
     '''
     Update a single value in MediaHaven
 
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
-        - field: MediaHaven field name
-        - value: Value to update
+        - field_value_dict: Dictionary with FieldDefinition FlatKeys and values
 
     Returns:
         - True if the update was successful, False otherwise
@@ -172,9 +170,9 @@ def single_value_metadata_update(client : MediaHaven, fragment_id: str, field: s
     # Get Prefect logger
     logger = get_run_logger()
     # Get JSON format for MediaHaven metadata update
-    json_dict = generate_mediahaven_json.fn(client, [(field, value)])
+    json_dict = generate_mediahaven_json.fn(client, field_value_dict)
     # Update metadata
-    resp = update_metadata.fn(client, fragment_id, json=json_dict)
+    resp = update_record.fn(client, fragment_id, json=json_dict)
     return resp
 
 '''
@@ -182,13 +180,13 @@ def single_value_metadata_update(client : MediaHaven, fragment_id: str, field: s
 '''
 
 @flow(name="mediahaven-update-single-record-flow")
-def main_flow(fragment_id: str, field: str, value, ):
+def main_flow(fragment_id: str, field_flat_key: str, value, ):
     '''
     Flow to update metadata in MediaHaven.
 
     Parameters:
         - fragment_id: ID of the record to update
-        - field: Name of the field to update
+        - field: FlatKey of the field to update
         - value: Value of the field to update
 
     Blocks:
@@ -204,7 +202,7 @@ def main_flow(fragment_id: str, field: str, value, ):
     # Create MediaHaven client
     client = get_client.fn("mediahaven-prd")
     # Update metadata
-    resp = single_value_metadata_update(client, fragment_id, field, value)
+    resp = fragment_metadata_update(client, fragment_id, {field_flat_key : value})
 
     
 
