@@ -16,6 +16,18 @@ from mediahaven.oauth2 import ROPCGrant, RequestTokenError
 
 @task
 def update_metadata(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
+    '''
+    Update metadata of a fragment.
+
+    Parameters:
+        - client: MediaHaven client
+        - fragment_id: ID of the fragment to update
+        - xml: XML metadata to update
+        - json: JSON metadata to update
+
+    Returns:
+        - True if the metadata was updated, False otherwise
+    '''
     time.sleep(1)
     logger = get_run_logger()
     resp = None
@@ -32,9 +44,11 @@ def update_metadata(client: MediaHaven, fragment_id, xml=None, json=None) -> boo
 def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, str]]) -> dict:
     '''
     Generate a json object that can be used to update metadata in MediaHaven
+
     Parameters:
         - client: MediaHaven client
         - field_value: List of tuples with field name and value
+
     Returns:
         - json object  
     '''
@@ -64,21 +78,94 @@ def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, s
 
 @task()
 def get_field_definition(client : MediaHaven, field: str) -> dict:
+    '''
+    Get the field definition from MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+        - field: Name of the field
+
+    Returns:
+        - field definition
+    '''
+    logger = get_run_logger()
     field_description = {}
-    field_dict = json.loads(client.fields.get(field=field).raw_response)
-    field_description["Family"] = field_dict["Family"]
-    field_description["Type"] = field_dict["Type"]
+    try:
+        field_dict = json.loads(client.fields.get(field=field).raw_response)
+        field_description["Family"] = field_dict["Family"]
+        field_description["Type"] = field_dict["Type"]
+    except Exception as e:
+        logger.error(f"Error getting field definition: {field}")
+        raise Exception(f"Error getting field definition: {e}")
     return field_description
+
+@task()
+def get_client(block_name_prefix: str) -> MediaHaven:
+    '''
+    Get a MediaHaven client.
+
+    Parameters:
+        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
+
+    Blocks:
+        - Secret:
+            - {block_name_prefix}-client-secret: Mediahaven API client secret
+            - {block_name_prefix}-password: Mediahaven API password
+        - String:
+            - {block_name_prefix}-client_id: Mediahaven API client ID
+            - {block_name_prefix}-username: Mediahaven API username
+            - {block_name_prefix}-url: Mediahaven API URL
+
+    Returns:
+        - MediaHaven client
+    '''
+    logger = get_run_logger()
+    # Get the credentials
+    try:
+        url = String.load(f"{block_name_prefix}-url").value
+    except ValueError as e:
+        logger.error(f"URL not found in block. Please create a String block with name {block_name_prefix}-url")
+        raise Exception(f"Error loading URL: {e}")
+    try:
+        client_id = String.load(f"{block_name_prefix}-client-id").value
+    except ValueError as e:
+        logger.error(f"Client ID not found in block. Please create a String block with name {block_name_prefix}-client-id")
+        raise Exception(f"Error loading client ID: {e}")
+    try:
+        username = String.load(f"{block_name_prefix}-username").value
+    except ValueError as e:
+        logger.error(f"Username not found in block. Please create a String block with name {block_name_prefix}-username")
+        raise Exception(f"Error loading username: {e}")
+    # Get OAuth2 Client and request token
+    try:
+        grant = ROPCGrant(url, client_id, Secret.load(f"{block_name_prefix}-client-secret").get())
+    except ValueError as e:
+        logger.error(f"Client secret not found in block. Please create a Secret block with name {block_name_prefix}-client-secret")
+        raise Exception(f"Error loading client secret: {e}")
+    try:
+        grant.request_token(username, Secret.load(f"{block_name_prefix}-password").get())
+    except ValueError as e:
+        logger.error(f"Password not found in block. Please create a Secret block with name {block_name_prefix}-password")
+        raise Exception(f"Error loading password: {e}")
+    except RequestTokenError as e:
+        logger.error(f"Error requesting token: {e}")
+        raise Exception(f"Error requesting token: {e}")
+    # Create MediaHaven client
+    client = MediaHaven(url, grant)
+    return client
+
 
 @task()
 def single_value_metadata_update(client : MediaHaven, fragment_id: str, field: str, value,) -> bool:
     '''
     Update a single value in MediaHaven
+
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
         - field: MediaHaven field name
         - value: Value to update
+
     Returns:
         - True if the update was successful, False otherwise
     '''
@@ -96,26 +183,26 @@ def single_value_metadata_update(client : MediaHaven, fragment_id: str, field: s
 
 @flow(name="mediahaven-update-single-record-flow")
 def main_flow(fragment_id: str, field: str, value, ):
-    """
+    '''
     Flow to update metadata in MediaHaven.
+
     Parameters:
         - fragment_id: ID of the record to update
         - field: Name of the field to update
         - value: Value of the field to update
-    Blocks:
-        - Mediahaven endpoint in String Block in Prefect (https)
-        - MediaHaven account with access to the endpoint
-        - Client ID and Client Secret for the MediaHaven account in Secret Blocks in Prefect
-        - Username and password for the MediaHaven account in Secret Blocks in Prefect
 
-    """
-    # Get the MediaHaven endpoint
-    endpoint = String.load("mediahaven-prd-endpoint")
-    # Get OAuth2 Client and request token
-    grant = ROPCGrant(endpoint, Secret.load("mediahaven-prd-client-id").get(), Secret.load("mediahaven-prd-client-secret").get())
-    grant.request_token(Secret.load("mediahaven-prd-user").get(), Secret.load("mediahaven-prd-password").get())
+    Blocks:
+        - Secret:
+            - {block_name_prefix}-client-secret: Mediahaven API client secret
+            - {block_name_prefix}-password: Mediahaven API password
+        - String:
+            - {block_name_prefix}-client_id: Mediahaven API client ID
+            - {block_name_prefix}-username: Mediahaven API username
+            - {block_name_prefix}-url: Mediahaven API URL
+
+    '''
     # Create MediaHaven client
-    client = MediaHaven(endpoint, grant)
+    client = get_client.fn("mediahaven-prd")
     # Update metadata
     resp = single_value_metadata_update(client, fragment_id, field, value)
 
