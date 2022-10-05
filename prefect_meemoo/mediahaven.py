@@ -41,7 +41,7 @@ def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, s
     logger = get_run_logger()
     # Get the field definitions block
     try:
-        field_definitions = JSON.load("mediahaven-field-definitions")
+        field_definitions = JSON.load("mediahaven-field-definitions").value
     except ValueError as e:
         field_definitions = {}
     # Generate the JSON
@@ -55,7 +55,7 @@ def generate_mediahaven_json(client : MediaHaven, field_value: List[Tuple[str, s
             except Exception as e:
                 logger.error(f"Error saving metadata structure: {e}")
                 raise Exception(f"Error saving JSON block: {e}")
-                
+
         if field_definitions[field]["Family"] not in json_dict["Metadata"]:
             json_dict['Metadata'][field_definitions[field]["Family"]]= {field : value}
         else:
