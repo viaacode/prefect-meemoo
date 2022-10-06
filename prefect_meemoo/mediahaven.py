@@ -41,42 +41,6 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
         return resp
 
 @task()
-def generate_mediahaven_json(client : MediaHaven, field_value: dict) -> dict:
-    '''
-    Generate a json object that can be used to update metadata in MediaHaven
-
-    Parameters:
-        - client: MediaHaven client
-        - field_value: List of tuples with field name and value
-
-    Returns:
-        - json object  
-    '''
-    logger = get_run_logger()
-    # Get the field definitions block
-    try:
-        field_definitions = JSON.load("mediahaven-field-definitions").value
-    except ValueError as e:
-        field_definitions = {}
-    # Generate the JSON
-    json_dict = {'Metadata': {}}
-    for field, value in field_value.items():
-        # Save the field definition in JSON block if it is not there yet
-        if field not in field_definitions:
-            field_definitions[field] = get_field_definition.fn(client, field)
-            try:
-                JSON(value=field_definitions).save("mediahaven-field-definitions", overwrite=True)
-            except Exception as e:
-                logger.error(f"Error saving metadata structure: {e}")
-                raise Exception(f"Error saving JSON block: {e}")
-
-        if field_definitions[field]["Family"] not in json_dict["Metadata"]:
-            json_dict['Metadata'][field_definitions[field]["Family"]]= {field : value}
-        else:
-            json_dict['Metadata'][field_definitions[field]["Family"]][field] = value
-    return json_dict
-
-@task()
 def get_field_definition(client : MediaHaven, field: str) -> dict:
     '''
     Get the field definition from MediaHaven
@@ -86,18 +50,98 @@ def get_field_definition(client : MediaHaven, field: str) -> dict:
         - field: Name of the field
 
     Returns:
-        - field definition
+        - field definition containing the following keys:
+            - Family
+            - Type
+            - Parent (Optional)
     '''
     logger = get_run_logger()
-    field_description = {}
     try:
-        field_dict = json.loads(client.fields.get(field=field).raw_response)
-        field_description["Family"] = field_dict["Family"]
-        field_description["Type"] = field_dict["Type"]
+        field_definition = json.loads(client.fields.get(field=field).raw_response)
     except Exception as e:
         logger.error(f"Error getting field definition: {field}")
         raise Exception(f"Error getting field definition: {e}")
-    return field_description
+    return field_definition
+
+@task()
+def generate_mediahaven_json(client : MediaHaven, field : str, value, merge_strategy : str = None) -> dict:
+    '''
+    Generate a json object that can be used to update metadata in MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+        - field: Name of the field to update
+        - value: Value to update the field with
+        - merge_strategy: Merge strategy to use when updating the field : KEEP, OVERWRITE, MERGE or SUBTRACT (default: None)
+            see: https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy
+
+    Returns:
+        - json object  
+    '''
+
+    def check_valid_merge_strategy(merge_strategy):
+        if merge_strategy not in ["KEEP", "OVERWRITE", "MERGE", "SUBTRACT"]:
+            logger.error(f"Invalid merge strategy: {merge_strategy}. Allowed values are KEEP, OVERWRITE, MERGE, SUBTRACT")
+            raise ValueError(f"Invalid merge strategy: {merge_strategy}. Allowed values are KEEP, OVERWRITE, MERGE, SUBTRACT")
+
+    def get_field_definitions_block(field):
+        # Get the field definitions block
+        try:
+            field_definitions = JSON.load("mediahaven-field-definitions").value
+        except ValueError as e:
+            field_definitions = {}
+        # Get and Transform the field definition to a dict containing Family, Type and Parent
+        if field not in field_definitions:
+            field_definition = get_field_definition.fn(client, field)
+            field_definitions[field]["Family"] = field_definition["Family"]
+            field_definitions[field]["Type"] = field_definition["Type"]
+            # Check if the field has a parent
+            if field_definition["Parent"]:
+                parent_field_definition = get_field_definition.fn(client, field_definition["Parent"])
+                field_definition["Parent"] = parent_field_definition["FlatKey"]
+                # Save the parent field definition if it's not already in the field definitions
+                if field_definitions[field]["Parent"] not in field_definitions:
+                    field_definitions[parent_field_definition["FlatKey"]]["Family"] = parent_field_definition["Family"]
+                    field_definitions[parent_field_definition["FlatKey"]]["Type"] = parent_field_definition["Type"]
+                    if parent_field_definition["Parent"]:
+                        logger.error(f"ComplexFields containing ComplexFields not supported: {field}")
+                        raise ValueError(f"ComplexFields containing ComplexFields not supported: {field}")
+            # Save the field definitions in JSON block
+            try:
+                JSON(value=field_definitions).save("mediahaven-field-definitions", overwrite=True)
+            except Exception as e:
+                logger.error(f"Error saving metadata structure: {e}")
+                raise e
+        return field_definitions
+
+    logger = get_run_logger()
+    # Generate the JSON
+    json_dict = {'Metadata': {}}
+    # Get the field definitions
+    field_definitions = get_field_definitions_block(field)
+    field_definition = field_definitions[field]
+    # Add field and value to generated JSON
+    if "Parent" not in field_definition:
+        # SimpleFields without a parent field
+        if field_definition["Type"] == "SimpleField":
+            json_dict['Metadata'][field_definition["Family"]]= {field : value}
+        # ComplexFields without a parent field
+        else : 
+            logger.error("ComplexFields without a parent field are not yet supported")
+            raise Exception("ComplexFields without a parent field are not yet supported")
+    # Check type of parent
+    elif field_definitions[field_definition["Parent"]]["Type"] == "MultiItemField":
+        # SimpleFields with a parent field like MultiItemField
+        if field_definition["Type"] == "SimpleField":
+            json_dict['Metadata'][field_definition["Family"]]= {field_definition["Parent"] : {field : [value]}}
+        if merge_strategy:
+            check_valid_merge_strategy(merge_strategy)
+            json_dict['Metadata']['MergeStrategies'][field] = merge_strategy
+    else: 
+        logger.error("Only ComplexFields of type MultiItemField are supported for now")
+        raise Exception("Only ComplexFields of type MultiItemField are supported for now")
+
+    return json_dict
 
 @task()
 def get_client(block_name_prefix: str) -> MediaHaven:

@@ -1,86 +1,84 @@
-# prefect-meemoo
+# Mediahaven
+## Tasks
+- [update_record](#update_record)
+- [get_field_definition](#get_field_definition)
+- [generate_mediahaven_json](#generate_mediahaven_json)
+- [get_client](#get_client)
+- [fragment_metadata_update](#fragment_metadata_update)
+### update_record
+update_record('client', 'fragment_id', 'xml', 'json')
 
-<p align="center">
-    <a href="https://pypi.python.org/pypi/prefect-meemoo/" alt="PyPI version">
-        <img alt="PyPI" src="https://img.shields.io/pypi/v/prefect-meemoo?color=0052FF&labelColor=090422"></a>
-    <a href="https://github.com/viaacode/prefect-meemoo/" alt="Stars">
-        <img src="https://img.shields.io/github/stars/viaacode/prefect-meemoo?color=0052FF&labelColor=090422" /></a>
-    <a href="https://pepy.tech/badge/prefect-meemoo/" alt="Downloads">
-        <img src="https://img.shields.io/pypi/dm/prefect-meemoo?color=0052FF&labelColor=090422" /></a>
-    <a href="https://github.com/viaacode/prefect-meemoo/pulse" alt="Activity">
-        <img src="https://img.shields.io/github/commit-activity/m/viaacode/prefect-meemoo?color=0052FF&labelColor=090422" /></a>
-    <br>
-    <a href="https://prefect-meemoo-community.slack.com" alt="Slack">
-        <img src="https://img.shields.io/badge/slack-join_community-red.svg?color=0052FF&labelColor=090422&logo=slack" /></a>
-    <a href="https://discourse.prefect-meemoo.io/" alt="Discourse">
-        <img src="https://img.shields.io/badge/discourse-browse_forum-red.svg?color=0052FF&labelColor=090422&logo=discourse" /></a>
-</p>
+    Update metadata of a fragment.
 
-## Welcome!
+    Parameters:
+        - client: MediaHaven client
+        - fragment_id: ID of the fragment to update
+        - xml: XML metadata to update
+        - json: JSON metadata to update
 
-Meemoo Prefect collection with common tasks
+    Returns:
+        - True if the metadata was updated, False otherwise
+    
+### get_field_definition
+get_field_definition('client', 'field')
 
-## Getting Started
+    Get the field definition from MediaHaven
 
-### Python setup
+    Parameters:
+        - client: MediaHaven client
+        - field: Name of the field
 
-Requires an installation of Python 3.7+.
+    Returns:
+        - field definition containing the following keys:
+            - Family
+            - Type
+            - Parent (Optional)
+    
+### generate_mediahaven_json
+generate_mediahaven_json('client', 'field', 'value', 'merge_strategy')
 
-We recommend using a Python virtual environment manager such as pipenv, conda or virtualenv.
+    Generate a json object that can be used to update metadata in MediaHaven
 
-These tasks are designed to work with Prefect 2.0. For more information about how to use Prefect, please refer to the [Prefect documentation](https://orion-docs.prefect.io/).
+    Parameters:
+        - client: MediaHaven client
+        - field: Name of the field to update
+        - value: Value to update the field with
+        - merge_strategy: Merge strategy to use when updating the field : KEEP, OVERWRITE, MERGE or SUBTRACT (default: None)
+            see: https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy
 
-### Installation
+    Returns:
+        - json object  
+    
+### get_client
+get_client('block_name_prefix',)
 
-Install `prefect-meemoo` with `pip`:
+    Get a MediaHaven client.
 
-```bash
-pip install prefect-meemoo
-```
+    Parameters:
+        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
 
-Then, register to [view the block](https://orion-docs.prefect.io/ui/blocks/) on Prefect Cloud:
+    Blocks:
+        - Secret:
+            - {block_name_prefix}-client-secret: Mediahaven API client secret
+            - {block_name_prefix}-password: Mediahaven API password
+        - String:
+            - {block_name_prefix}-client_id: Mediahaven API client ID
+            - {block_name_prefix}-username: Mediahaven API username
+            - {block_name_prefix}-url: Mediahaven API URL
 
-```bash
-prefect block register -m prefect_meemoo.credentials
-```
+    Returns:
+        - MediaHaven client
+    
+### fragment_metadata_update
+fragment_metadata_update('client', 'fragment_id', 'field_value_dict')
 
-Note, to use the `load` method on Blocks, you must already have a block document [saved through code](https://orion-docs.prefect.io/concepts/blocks/#saving-blocks) or [saved through the UI](https://orion-docs.prefect.io/ui/blocks/).
+    Update a single value in MediaHaven
 
-### Write and run a flow
+    Parameters:
+        - client: MediaHaven client
+        - fragment_id: MediaHaven fragment id
+        - field_value_dict: Dictionary with FieldDefinition FlatKeys and values
 
-```python
-from prefect import flow
-from prefect_meemoo.tasks import (
-    goodbye_prefect_meemoo,
-    hello_prefect_meemoo,
-)
-
-
-@flow
-def example_flow():
-    hello_prefect_meemoo
-    goodbye_prefect_meemoo
-
-example_flow()
-```
-
-## Resources
-
-If you encounter any bugs while using `prefect-meemoo`, feel free to open an issue in the [prefect-meemoo](https://github.com/viaacode/prefect-meemoo) repository.
-
-If you have any questions or issues while using `prefect-meemoo`, you can find help in either the [Prefect Discourse forum](https://discourse.prefect.io/) or the [Prefect Slack community](https://prefect.io/slack).
-
-## Development
-
-If you'd like to install a version of `prefect-meemoo` for development, clone the repository and perform an editable install with `pip`:
-
-```bash
-git clone https://github.com/viaacode/prefect-meemoo.git
-
-cd prefect-meemoo/
-
-pip install -e ".[dev]"
-
-# Install linting pre-commit hooks
-pre-commit install
-```
+    Returns:
+        - True if the update was successful, False otherwise
+    
