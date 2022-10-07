@@ -10,6 +10,7 @@ from mediahaven import MediaHaven
 from mediahaven.mediahaven import MediaHavenException
 from mediahaven.oauth2 import ROPCGrant, RequestTokenError
 
+from mergedeep import merge
 '''
 --- Tasks ---
 '''
@@ -64,7 +65,7 @@ def get_field_definition(client : MediaHaven, field: str) -> dict:
     return field_definition
 
 @task()
-def generate_mediahaven_json(client : MediaHaven, field : str, value, merge_strategy : str = None) -> dict:
+def generate_record_json(client : MediaHaven, field : str, value, merge_strategy : str = None) -> dict:
     '''
     Generate a json object that can be used to update metadata in MediaHaven
 
@@ -73,7 +74,7 @@ def generate_mediahaven_json(client : MediaHaven, field : str, value, merge_stra
         - field: Name of the field to update
         - value: Value to update the field with
         - merge_strategy: Merge strategy to use when updating the field : KEEP, OVERWRITE, MERGE or SUBTRACT (default: None)
-            see: https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy
+            see: [](https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy)
 
     Returns:
         - json object  
@@ -127,7 +128,7 @@ def generate_mediahaven_json(client : MediaHaven, field : str, value, merge_stra
             json_dict['Metadata'][field_definition["Family"]]= {field : value}
         # ComplexFields without a parent field
         else : 
-            logger.error("ComplexFields without a parent field are not yet supported")
+            logger.error(f"ComplexFields without a parent field are not yet supported: {field}")
             raise Exception("ComplexFields without a parent field are not yet supported")
     # Check type of parent
     elif field_definitions[field_definition["Parent"]]["Type"] == "MultiItemField":
@@ -138,7 +139,7 @@ def generate_mediahaven_json(client : MediaHaven, field : str, value, merge_stra
             check_valid_merge_strategy(merge_strategy)
             json_dict['Metadata']['MergeStrategies'][field] = merge_strategy
     else: 
-        logger.error("Only ComplexFields of type MultiItemField are supported for now")
+        logger.error(f"Only ComplexFields of type MultiItemField are supported for now: {field}")
         raise Exception("Only ComplexFields of type MultiItemField are supported for now")
 
     return json_dict
@@ -199,14 +200,15 @@ def get_client(block_name_prefix: str) -> MediaHaven:
     return client
 
 @task()
-def fragment_metadata_update(client : MediaHaven, fragment_id : str, field_value_dict : dict,) -> bool:
+def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : dict,) -> bool:
     '''
-    Update a single value in MediaHaven
+    Generate JSON for updating metadata of a fragment and update in MediaHaven.
 
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
-        - field_value_dict: Dictionary with FieldDefinition FlatKeys and values
+        - fields: Dictionary with fields and values and optional merge strategies
+            ex: {"dcterms_created": {"value": "2022-01-01", "merge_strategy": "KEEP"}}
 
     Returns:
         - True if the update was successful, False otherwise
@@ -214,7 +216,9 @@ def fragment_metadata_update(client : MediaHaven, fragment_id : str, field_value
     # Get Prefect logger
     logger = get_run_logger()
     # Get JSON format for MediaHaven metadata update
-    json_dict = generate_mediahaven_json.fn(client, field_value_dict)
+    json_dict = {}
+    for field, content in fields.items():
+        merge(json_dict, generate_record_json.fn(client, field, content["value"], content["merge_strategy"]))
     # Update metadata
     resp = update_record.fn(client, fragment_id, json=json_dict)
     return resp
@@ -224,7 +228,7 @@ def fragment_metadata_update(client : MediaHaven, fragment_id : str, field_value
 '''
 
 @flow(name="mediahaven-update-single-record-flow")
-def main_flow(fragment_id: str, field_flat_key: str, value, ):
+def update_single_value_flow(fragment_id: str, field_flat_key: str, value, ):
     '''
     Flow to update metadata in MediaHaven.
 
@@ -246,7 +250,7 @@ def main_flow(fragment_id: str, field_flat_key: str, value, ):
     # Create MediaHaven client
     client = get_client.fn("mediahaven-prd")
     # Update metadata
-    resp = fragment_metadata_update(client, fragment_id, {field_flat_key : value})
+    resp = fragment_metadata_update(client, fragment_id, {field_flat_key : {"value" : value}})
 
     
 

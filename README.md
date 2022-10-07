@@ -2,7 +2,7 @@
 ## Tasks
 - [update_record](#update_record)
 - [get_field_definition](#get_field_definition)
-- [generate_mediahaven_json](#generate_mediahaven_json)
+- [generate_record_json](#generate_record_json)
 - [get_client](#get_client)
 - [fragment_metadata_update](#fragment_metadata_update)
 ### update_record
@@ -34,8 +34,8 @@ get_field_definition('client', 'field')
             - Type
             - Parent (Optional)
     
-### generate_mediahaven_json
-generate_mediahaven_json('client', 'field', 'value', 'merge_strategy')
+### generate_record_json
+generate_record_json('client', 'field', 'value', 'merge_strategy')
 
     Generate a json object that can be used to update metadata in MediaHaven
 
@@ -44,7 +44,7 @@ generate_mediahaven_json('client', 'field', 'value', 'merge_strategy')
         - field: Name of the field to update
         - value: Value to update the field with
         - merge_strategy: Merge strategy to use when updating the field : KEEP, OVERWRITE, MERGE or SUBTRACT (default: None)
-            see: https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy
+            see: [](https://mediahaven.atlassian.net/wiki/spaces/CS/pages/722567181/Metadata+Strategy)
 
     Returns:
         - json object  
@@ -70,14 +70,15 @@ get_client('block_name_prefix',)
         - MediaHaven client
     
 ### fragment_metadata_update
-fragment_metadata_update('client', 'fragment_id', 'field_value_dict')
+fragment_metadata_update('client', 'fragment_id', 'fields')
 
-    Update a single value in MediaHaven
+    Generate JSON for updating metadata of a fragment and update in MediaHaven.
 
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
-        - field_value_dict: Dictionary with FieldDefinition FlatKeys and values
+        - fields: Dictionary with fields and values and optional merge strategies
+            ex: {"dcterms_created": {"value": "2022-01-01", "merge_strategy": "KEEP"}}
 
     Returns:
         - True if the update was successful, False otherwise
