@@ -79,6 +79,7 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
     Returns:
         - json object  
     '''
+    SIMPLE_FIELDS = ["SimpleField", "DateField", "EnumField", "BooleanField", "LongField", "TimeCodeField", "EDTFField"]
 
     def check_valid_merge_strategy(merge_strategy):
         if merge_strategy not in ["KEEP", "OVERWRITE", "MERGE", "SUBTRACT"]:
@@ -124,7 +125,7 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
     # Add field and value to generated JSON
     if "Parent" not in field_definition:
         # SimpleFields without a parent field
-        if field_definition["Type"] == "SimpleField":
+        if field_definition["Type"] in SIMPLE_FIELDS:
             json_dict['Metadata'][field_definition["Family"]]= {field : value}
         # ComplexFields without a parent field
         else : 
