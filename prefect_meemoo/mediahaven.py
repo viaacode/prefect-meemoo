@@ -101,7 +101,8 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
             # Check if the field has a parent
             if field_definition["ParentId"]:
                 parent_field_definition = get_field_definition.fn(client, field_definition["ParentId"])
-                field_definition["Parent"] = parent_field_definition["FlatKey"]
+                field_definitions[field]["Parent"] = parent_field_definition["FlatKey"]
+                logger.info(f"Found parent field: {field_definitions[field]['Parent']}")
                 # Save the parent field definition if it's not already in the field definitions
                 if field_definitions[field]["Parent"] not in field_definitions:
                     field_definitions[parent_field_definition["FlatKey"]]["Family"] = parent_field_definition["Family"]

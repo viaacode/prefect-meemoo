@@ -12,7 +12,7 @@ with open("README.md") as readme_file:
 
 setup(
     name="prefect-meemoo",
-    version="0.2.3",
+    version="0.2.7",
     description="Meemoo Prefect collection with common tasks",
     license="Apache License 2.0",
     author="Lennert Van de Velde",
