@@ -1,3 +1,7 @@
 prefect>=2.0.0
 mediahaven
 mergedeep
+SPARQLWrapper
+oxrdflib
+rdflib
+ijson
