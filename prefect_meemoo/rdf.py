@@ -1,12 +1,13 @@
 import os.path
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
 
+import requests
 from prefect import get_run_logger, task
+from rdf_parse import parse_json
 from rdflib import Graph, Namespace
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import DIGEST, GET, POST, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
-from rdf_parse import parse_json
 
 AUTH_TYPES = {HTTPBasicAuth: BASIC, HTTPDigestAuth: DIGEST}
 METHODS = {"GET": GET, "POST": POST}
@@ -15,6 +16,32 @@ SRC_NS = "https://data.hetarchief.be/ns/source#"
 """
 --- Tasks wrt RDF ---
 """
+
+# SPARQL 1.1 Graph Store HTTP Protocol
+def sparql_gsp_post(
+    input_data: str,
+    endpoint: str,
+    graph: str = None,
+    contentType: str = "text/turtle",
+    auth=None,
+):
+    """
+    Send POST request to a SPARQL Graph Store Protocol endpoint
+
+    :param input_data: str
+    """
+    graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    r_post = requests.request(
+        "POST",
+        url=graph_endpoint,
+        headers={"Content-Type": contentType},
+        auth=auth,
+        data=input_data,
+    )
+    return r_post.status_code < 400
+
+
+# SPARQL 1.1 Update
 
 
 @task(name="execute SPARQL Update query")
@@ -83,9 +110,11 @@ def insert(triples, endpoint, graph=None):
 
 
 def to_ntriples(t, namespace_manager=None):
-    return (f"{t[0].n3(namespace_manager)} " 
-            f"{t[1].n3(namespace_manager)} " 
-            f"{t[2].n3(namespace_manager)} . \n")
+    return (
+        f"{t[0].n3(namespace_manager)} "
+        f"{t[1].n3(namespace_manager)} "
+        f"{t[2].n3(namespace_manager)} . \n"
+    )
 
 
 @task(name="convert json to rdf")
