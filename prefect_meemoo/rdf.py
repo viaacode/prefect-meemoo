@@ -10,7 +10,7 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
 
-from rdf_parse import parse_json
+from .rdf_parse import parse_json
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
@@ -33,8 +33,9 @@ def sparql_gsp_post(
     Parameters:
         - input_data (str): Serialized RDF data to be POSTed to the endpoint
         - endpoint (str): The URL of the SPARQL Graph Store endpoint
-        - graph (str, optional): A URI identifying the named graph to post to. 
-        If set to None, the `endpoint` parameter is assumed to be using [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
+        - graph (str, optional): A URI identifying the named graph to post to.
+                If set to None, the `endpoint` parameter is assumed to be using 
+                [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
         - content_type (str, optional): the mimeType of the `input_data`. Defaults to "text/turtle".
         - auth (AuthBase, optional): a `requests` library authentication object
 
@@ -83,7 +84,6 @@ def sparql_select(
     if not sparql.isSparqlQueryRequest():
         logger.warning("Query is an update query.")
 
-    # TODO: not sure below is needed
     if sparql.method == POST:
         sparql.setOnlyConneg(True)
         sparql.addCustomHttpHeader("Content-type", "application/sparql-query")
@@ -94,7 +94,7 @@ def sparql_select(
         for h in headers.items():
             sparql.addCustomHttpHeader(h[0], h[1])
 
-    logger.info(f"Sending query to {endpoint}")
+    logger.info("Sending query to %.", endpoint)
 
     sparql.setReturnFormat(CSV)
     results = sparql.query().convert()
@@ -136,7 +136,7 @@ def sparql_update_query(
         for h in headers.items():
             sparql.addCustomHttpHeader(h[0], h[1])
 
-    logger.info(f"Sending query to {endpoint}")
+    logger.info("Sending query to %.", endpoint)
 
     results = sparql.query()
     logger.info(results.response.read())
@@ -175,20 +175,21 @@ def sparql_update_insert(triples, endpoint, graph=None):
 
 
 @task(name="convert json to rdf")
-def json_to_rdf(input_data: str, ns: str = SRC_NS):
+def json_to_rdf(*input_data: str, ns: str = SRC_NS):
     """
-    Converts a JSON document to RDF by direct mapping
+    Converts JSON documents to RDF by direct mapping
 
     Args:
-        input_data (str): JSON string to map
+        input_data*: arbitrary list of JSON strings to map
         ns (str, optional): Namespace to use to build RDF predicates. Defaults to https://data.hetarchief.be/ns/source#.
 
     Returns:
         str: ntriples serialization of the result
     """
     g = Graph(store="Oxigraph")
-    for t in parse_json(input_data, namespace=Namespace(ns)):
-        g.add(t)
+    for data in input_data:
+        for t in parse_json(data, namespace=Namespace(ns)):
+            g.add(t)
     return g.serialize(format="nt")
 
 
@@ -198,7 +199,7 @@ def sparql_transform(input_data: str, query: str):
     Transforms one RDF graph in another using a CONSTRUCT query
 
     Args:
-        input_data (_type_): input RDF graph serialized as ntriples.
+        *input_data: input RDF graph serialized as ntriples.
         query (str): SPARQL construct query either as file path or as query text.
 
     Returns:
@@ -243,15 +244,16 @@ def to_ntriples(t, namespace_manager=None):
 def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = None):
     sparql = SPARQLWrapper(endpoint)
 
-    if isinstance(auth, HTTPBasicAuth):
-        auth = HTTPBasicAuth(auth)
-        sparql.setHTTPAuth(BASIC)
-        sparql.setCredentials(auth.username, auth.password)
-    elif isinstance(auth, HTTPDigestAuth):
-        auth = HTTPDigestAuth(auth)
-        sparql.setHTTPAuth(DIGEST)
-        sparql.setCredentials(auth.username, auth.password)
-
+    if auth is not None:
+        if isinstance(auth, HTTPBasicAuth):
+            sparql.setHTTPAuth(BASIC)
+            sparql.setCredentials(auth.username, auth.password)
+        elif isinstance(auth, HTTPDigestAuth):
+            sparql.setHTTPAuth(DIGEST)
+            sparql.setCredentials(auth.username, auth.password)
+        else:
+            raise NotImplementedError()
+        
     sparql.setMethod(METHODS[method])
 
     return sparql
