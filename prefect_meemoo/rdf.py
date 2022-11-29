@@ -10,7 +10,7 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
 
-from .rdf_parse import parse_json
+from prefect_meemoo.rdf_parse import parse_json
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
