@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from prefect import get_run_logger, task
 from pyshacl import validate
-from rdflib import Graph, Namespace
+from rdflib import Graph, Namespace, ConjunctiveGraph, URIRef
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
@@ -312,7 +312,7 @@ def sparql_transform(input_data: str, query: str):
     Returns:
         str: result RDF graph serialized as ntriples
     """
-
+    logger = get_run_logger()
     input_graph = Graph(store="Oxigraph")
     output_graph = Graph(store="Oxigraph")
 
@@ -324,6 +324,34 @@ def sparql_transform(input_data: str, query: str):
 
     for result in results:
         output_graph.add(result)
+
+    logger.info("Output %d triples", len(output_graph))
+
+    return output_graph.serialize(format="nt")
+
+def sparql_transform_insert(input_data: str, query: str, target_graph: str):
+    """
+    Transforms one RDF graph in another using an INSERT query
+
+    Args:
+        *input_data: input RDF graph serialized as ntriples.
+        query (str): SPARQL construct query either as file path or as query text.
+        target_graph (str): graph in which the result is inserted   
+
+    Returns:
+        str: result RDF graph serialized as ntriples
+    """
+    logger = get_run_logger()
+    graph = ConjunctiveGraph(store="Oxigraph")
+
+    query = resolve_query(query)
+
+    graph.parse(data=input_data, format="nt")
+
+    graph.update(query)
+    output_graph = graph.get_graph(URIRef(target_graph))
+
+    logger.info("Output %d triples", len(output_graph))
 
     return output_graph.serialize(format="nt")
 
