@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 import requests
 from prefect import get_run_logger, task
+from pyshacl import validate
 from rdflib import Graph, Namespace
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
@@ -14,27 +15,30 @@ from prefect_meemoo.rdf_parse import parse_json
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
+TIMEOUT = 0.500
 
 """
 --- Tasks wrt RDF ---
 """
 
 # SPARQL 1.1 Graph Store HTTP Protocol
+@task(name="SPARQL Graph Store 1.1 POST")
 def sparql_gsp_post(
     input_data: str,
     endpoint: str,
     graph: str = None,
     content_type: str = "text/turtle",
     auth: AuthBase = None,
+    timeout: float = TIMEOUT,
 ):
     """
-    Send a POST request to a SPARQL Graph Store Protocol endpoint
+    Send a POST request to a SPARQL Graph Store HTTP Protocol endpoint
 
     Parameters:
         - input_data (str): Serialized RDF data to be POSTed to the endpoint
         - endpoint (str): The URL of the SPARQL Graph Store endpoint
         - graph (str, optional): A URI identifying the named graph to post to.
-                If set to None, the `endpoint` parameter is assumed to be using 
+                If set to None, the `endpoint` parameter is assumed to be using
                 [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
         - content_type (str, optional): the mimeType of the `input_data`. Defaults to "text/turtle".
         - auth (AuthBase, optional): a `requests` library authentication object
@@ -43,16 +47,116 @@ def sparql_gsp_post(
         - True if the POST was successful, False otherwise
     """
     graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
-    r_post = requests.request(
-        "POST",
+    req = requests.post(
         url=graph_endpoint,
         headers={"Content-Type": content_type},
+        timeout=timeout,
         auth=auth,
         data=input_data,
     )
-    if r_post.status_code >= 400:
-        raise Exception(f"Request to {graph_endpoint} failed: {r_post.status_code}")
+    if req.status_code >= 400:
+        raise Exception(f"POST request to {graph_endpoint} failed: {req.status_code}")
     return True
+
+
+@task(name="SPARQL Graph Store 1.1 PUT")
+def sparql_gsp_put(
+    input_data: str,
+    endpoint: str,
+    graph: str = None,
+    content_type: str = "text/turtle",
+    auth: AuthBase = None,
+    timeout: float = TIMEOUT,
+):
+    """
+    Send a PUT request to a SPARQL Graph Store HTTP Protocol endpoint
+
+    Parameters:
+        - input_data (str): Serialized RDF data to be PUT to the endpoint
+        - endpoint (str): The URL of the SPARQL Graph Store endpoint
+        - graph (str, optional): A URI identifying the named graph to put to.
+                If set to None, the `endpoint` parameter is assumed to be using
+                [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
+        - content_type (str, optional): the mimeType of the `input_data`. Defaults to "text/turtle".
+        - auth (AuthBase, optional): a `requests` library authentication object
+
+    Returns:
+        - True if the PUT was successful, False otherwise
+    """
+    graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    req = requests.put(
+        url=graph_endpoint,
+        headers={"Content-Type": content_type},
+        timeout=timeout,
+        auth=auth,
+        data=input_data,
+    )
+    if req.status_code >= 400:
+        raise Exception(f"PUT request to {graph_endpoint} failed: {req.status_code}")
+    return True
+
+
+@task(name="SPARQL Graph Store 1.1 DELETE")
+def sparql_gsp_delete(
+    endpoint: str, graph: str = None, auth: AuthBase = None, timeout: float = TIMEOUT
+):
+    """
+    Send a DELETE request to a SPARQL Graph Store HTTP Protocol endpoint
+
+    Parameters:
+        - endpoint (str): The URL of the SPARQL Graph Store endpoint
+        - graph (str, optional): A URI identifying the named graph to delete.
+                If set to None, the `endpoint` parameter is assumed to be using
+                [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
+        - auth (AuthBase, optional): a `requests` library authentication object
+
+    Returns:
+        - True if the DELETE was successful, False otherwise
+    """
+    graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    req = requests.delete(
+        url=graph_endpoint,
+        auth=auth,
+        timeout=timeout,
+    )
+    if req.status_code >= 400:
+        raise Exception(f"Delete of {graph_endpoint} failed: {req.status_code}")
+    return True
+
+
+# SPARQL 1.1 Graph Store HTTP Protocol
+@task(name="SPARQL Graph Store 1.1 GET")
+def sparql_gsp_get(
+    endpoint: str,
+    graph: str = None,
+    content_type: str = "text/turtle",
+    auth: AuthBase = None,
+    timeout: float = TIMEOUT,
+):
+    """
+    Send a GET request to a SPARQL Graph Store HTTP Protocol endpoint
+
+    Parameters:
+        - endpoint (str): The URL of the SPARQL Graph Store endpoint
+        - graph (str, optional): A URI identifying the named graph to get.
+                If set to None, the `endpoint` parameter is assumed to be using
+                [Direct Graph Identification](https://www.w3.org/TR/sparql11-http-rdf-update/#direct-graph-identification).
+        - content_type (str, optional): the deisred mimeType of the result. Defaults to "text/turtle".
+        - auth (AuthBase, optional): a `requests` library authentication object
+
+    Returns:
+        - True if the POST was successful, False otherwise
+    """
+    graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    req = requests.get(
+        url=graph_endpoint,
+        headers={"Accept": content_type},
+        auth=auth,
+        timeout=timeout,
+    )
+    if req.status_code >= 400:
+        raise Exception(f"POST request to {graph_endpoint} failed: {req.status_code}")
+    return req.text
 
 
 @task(name="execute SPARQL SELECT query")
@@ -188,6 +292,9 @@ def json_to_rdf(*input_data: str, ns: str = SRC_NS):
     """
     g = Graph(store="Oxigraph")
     for data in input_data:
+        if data is None:
+            continue
+
         for t in parse_json(data, namespace=Namespace(ns)):
             g.add(t)
     return g.serialize(format="nt")
@@ -233,6 +340,26 @@ def combine_ntriples(*ntriples: str):
     return temp
 
 
+@task(name="validate ntriples")
+def validate_ntriples(input_data: str, shacl_graph: str, ont_graph: str = None):
+
+    logger = get_run_logger()
+    input_graph = Graph()
+    input_graph.parse(data=input_data)
+
+    r = validate(
+        input_graph,
+        shacl_graph=shacl_graph,
+        # ont_graph=ont_graph,
+        allow_infos=True,
+        allow_warnings=True,
+    )
+
+    conforms, results_graph, results_text = r
+    logger.info(results_text)
+    return conforms
+
+
 def to_ntriples(t, namespace_manager=None):
     return (
         f"{t[0].n3(namespace_manager)} "
@@ -253,7 +380,7 @@ def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = Non
             sparql.setCredentials(auth.username, auth.password)
         else:
             raise NotImplementedError()
-        
+
     sparql.setMethod(METHODS[method])
 
     return sparql
