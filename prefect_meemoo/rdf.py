@@ -6,7 +6,8 @@ import pandas as pd
 import requests
 from prefect import get_run_logger, task
 from pyshacl import validate
-from rdflib import Graph, Namespace, ConjunctiveGraph, URIRef
+from rdflib import ConjunctiveGraph, Graph, Namespace, URIRef
+from rdflib.compare import graph_diff, to_isomorphic
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
@@ -240,7 +241,7 @@ def sparql_update_query(
         for h in headers.items():
             sparql.addCustomHttpHeader(h[0], h[1])
 
-    logger.info("Sending query to %.", endpoint)
+    logger.info("Sending query to %s.", endpoint)
 
     results = sparql.query()
     logger.info(results.response.read())
@@ -276,6 +277,42 @@ def sparql_update_insert(triples, endpoint, graph=None):
         query += "}"
 
     return sparql_update_query(query, endpoint)
+
+
+@task(name="clear graph")
+def sparql_update_clear(graph, endpoint, silent=True):
+    """
+    Clear a graph using SPARQL Update.
+
+    Parameters:
+        - graph (str): A URI identifying the named graph to insert the triples into.
+        - endpoint (str): The URL of the SPARQL endpoint
+        - silent (bool):
+
+    Returns:
+        - True if the request was successful, False otherwise
+    """
+    silent_key = "SILENT" if silent else ""
+
+    return sparql_update_query(f"CLEAR {silent_key} GRAPH <{graph}>", endpoint)
+
+
+@task(name="compare RDF files")
+def compare(input_data1: str, input_data2: str):
+    logger = get_run_logger()
+    g1 = Graph().parse(data=input_data1, format="nt")
+    g2 = Graph().parse(data=input_data2, format="nt")
+
+    iso1 = to_isomorphic(g1)
+    iso2 = to_isomorphic(g2)
+
+    in_both, in_first, in_second = graph_diff(iso1, iso2)
+    logger.info(
+        "In first: %s, In second %s",
+        in_first.serialize(format="nt"),
+        in_second.serialize(format="nt"),
+    )
+    return iso1 == iso2
 
 
 @task(name="convert json to rdf")
@@ -329,6 +366,7 @@ def sparql_transform(input_data: str, query: str):
 
     return output_graph.serialize(format="nt")
 
+
 def sparql_transform_insert(input_data: str, query: str, target_graph: str):
     """
     Transforms one RDF graph in another using an INSERT query
@@ -336,7 +374,7 @@ def sparql_transform_insert(input_data: str, query: str, target_graph: str):
     Args:
         *input_data: input RDF graph serialized as ntriples.
         query (str): SPARQL construct query either as file path or as query text.
-        target_graph (str): graph in which the result is inserted   
+        target_graph (str): graph in which the result is inserted
 
     Returns:
         str: result RDF graph serialized as ntriples
