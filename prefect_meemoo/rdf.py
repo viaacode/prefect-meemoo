@@ -183,7 +183,7 @@ def sparql_select(
     """
     logger = get_run_logger()
     sparql = create_sparqlwrapper(endpoint, method, auth)
-    query = resolve_query(query)
+    query = resolve_text(query)
     sparql.setQuery(query)
 
     if not sparql.isSparqlQueryRequest():
@@ -231,7 +231,7 @@ def sparql_update_query(
     """
     logger = get_run_logger()
     sparql = create_sparqlwrapper(endpoint, method, auth)
-    query = resolve_query(query)
+    query = resolve_text(query)
     sparql.setQuery(query)
 
     if sparql.isSparqlUpdateRequest():
@@ -300,8 +300,11 @@ def sparql_update_clear(graph, endpoint, silent=True):
 @task(name="compare RDF files")
 def compare(input_data1: str, input_data2: str):
     logger = get_run_logger()
-    g1 = Graph().parse(data=input_data1, format="nt")
-    g2 = Graph().parse(data=input_data2, format="nt")
+
+    g1_text = resolve_text(input_data1)
+    g2_text = resolve_text(input_data2)
+    g1 = Graph().parse(data=g1_text)
+    g2 = Graph().parse(data=g2_text)
 
     iso1 = to_isomorphic(g1)
     iso2 = to_isomorphic(g2)
@@ -353,7 +356,7 @@ def sparql_transform(input_data: str, query: str):
     input_graph = Graph(store="Oxigraph")
     output_graph = Graph(store="Oxigraph")
 
-    query = resolve_query(query)
+    query = resolve_text(query)
 
     input_graph.parse(data=input_data, format="nt")
 
@@ -382,7 +385,7 @@ def sparql_transform_insert(input_data: str, query: str, target_graph: str):
     logger = get_run_logger()
     graph = ConjunctiveGraph(store="Oxigraph")
 
-    query = resolve_query(query)
+    query = resolve_text(query)
 
     graph.parse(data=input_data, format="nt")
     logger.info("Inserting in graph %s", target_graph)
@@ -453,12 +456,12 @@ def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = Non
     return sparql
 
 
-def resolve_query(query):
+def resolve_text(value):
     logger = get_run_logger()
-    query_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), query)
-    if os.path.isfile(query_path):
-        with open(query_path, encoding="utf-8") as f:
-            query = f.read()
+    text_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), value)
+    if os.path.isfile(text_path):
+        with open(text_path, encoding="utf-8") as f:
+            value = f.read()
     else:
-        logger.warning("Query does not point to a file; executing as query text.")
-    return query
+        logger.warning("Path does not point to a file; executing as text.")
+    return value
