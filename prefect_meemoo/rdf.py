@@ -385,6 +385,7 @@ def sparql_transform_insert(input_data: str, query: str, target_graph: str):
     query = resolve_query(query)
 
     graph.parse(data=input_data, format="nt")
+    logger.info("Inserting in graph %s", target_graph)
 
     graph.update(query)
     output_graph = graph.get_graph(URIRef(target_graph))
