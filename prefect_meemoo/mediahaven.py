@@ -50,7 +50,7 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
         - client: MediaHaven client
 
     Returns:
-        - List of organisations
+        - Generator of organisations
             - ID
             - Name
             - LongName

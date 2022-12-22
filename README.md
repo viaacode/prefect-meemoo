@@ -34,7 +34,7 @@ search_organisations('client',)
         - client: MediaHaven client
 
     Returns:
-        - List of organisations
+        - Generator of organisations
             - ID
             - Name
             - LongName
