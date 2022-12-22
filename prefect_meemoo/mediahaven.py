@@ -14,6 +14,64 @@ from mergedeep import merge
 '''
 --- Tasks ---
 '''
+
+@task(name='Get MediaHaven client')
+def get_client(block_name_prefix: str) -> MediaHaven:
+    '''
+    Get a MediaHaven client.
+
+    Parameters:
+        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
+
+    Blocks:
+        - Secret:
+            - {block_name_prefix}-client-secret: Mediahaven API client secret
+            - {block_name_prefix}-password: Mediahaven API password
+        - String:
+            - {block_name_prefix}-client-id: Mediahaven API client ID
+            - {block_name_prefix}-username: Mediahaven API username
+            - {block_name_prefix}-url: Mediahaven API URL
+
+    Returns:
+        - MediaHaven client
+    '''
+    logger = get_run_logger()
+    # Get the credentials
+    try:
+        url = String.load(f"{block_name_prefix}-url").value
+    except ValueError as e:
+        logger.error(f"URL not found in block. Please create a String block with name {block_name_prefix}-url")
+        raise Exception(f"Error loading URL: {e}")
+    try:
+        client_id = String.load(f"{block_name_prefix}-client-id").value
+    except ValueError as e:
+        logger.error(f"Client ID not found in block. Please create a String block with name {block_name_prefix}-client-id")
+        raise Exception(f"Error loading client ID: {e}")
+    try:
+        username = String.load(f"{block_name_prefix}-username").value
+    except ValueError as e:
+        logger.error(f"Username not found in block. Please create a String block with name {block_name_prefix}-username")
+        raise Exception(f"Error loading username: {e}")
+
+    # Get OAuth2 Client and request token
+    try:
+        grant = ROPCGrant(url, client_id, Secret.load(f"{block_name_prefix}-client-secret").get())
+    except ValueError as e:
+        logger.error(f"Client secret not found in block. Please create a Secret block with name {block_name_prefix}-client-secret")
+        raise Exception(f"Error loading client secret: {e}")
+    try:
+        grant.request_token(username, Secret.load(f"{block_name_prefix}-password").get())
+    except ValueError as e:
+        logger.error(f"Password not found in block. Please create a Secret block with name {block_name_prefix}-password")
+        raise Exception(f"Error loading password: {e}")
+    except RequestTokenError as e:
+        logger.error(f"Error requesting token: {e}")
+        raise Exception(f"Error requesting token: {e}")
+
+    # Create MediaHaven client
+    client = MediaHaven(url, grant)
+    return client
+
 @task(name="Get organisation")
 def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
     '''
@@ -202,62 +260,7 @@ def generate_record_json(client : MediaHaven, field_flat_key : str, value, merge
 
     return json_dict
 
-@task(name='Get MediaHaven client')
-def get_client(block_name_prefix: str) -> MediaHaven:
-    '''
-    Get a MediaHaven client.
 
-    Parameters:
-        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
-
-    Blocks:
-        - Secret:
-            - {block_name_prefix}-client-secret: Mediahaven API client secret
-            - {block_name_prefix}-password: Mediahaven API password
-        - String:
-            - {block_name_prefix}-client-id: Mediahaven API client ID
-            - {block_name_prefix}-username: Mediahaven API username
-            - {block_name_prefix}-url: Mediahaven API URL
-
-    Returns:
-        - MediaHaven client
-    '''
-    logger = get_run_logger()
-    # Get the credentials
-    try:
-        url = String.load(f"{block_name_prefix}-url").value
-    except ValueError as e:
-        logger.error(f"URL not found in block. Please create a String block with name {block_name_prefix}-url")
-        raise Exception(f"Error loading URL: {e}")
-    try:
-        client_id = String.load(f"{block_name_prefix}-client-id").value
-    except ValueError as e:
-        logger.error(f"Client ID not found in block. Please create a String block with name {block_name_prefix}-client-id")
-        raise Exception(f"Error loading client ID: {e}")
-    try:
-        username = String.load(f"{block_name_prefix}-username").value
-    except ValueError as e:
-        logger.error(f"Username not found in block. Please create a String block with name {block_name_prefix}-username")
-        raise Exception(f"Error loading username: {e}")
-
-    # Get OAuth2 Client and request token
-    try:
-        grant = ROPCGrant(url, client_id, Secret.load(f"{block_name_prefix}-client-secret").get())
-    except ValueError as e:
-        logger.error(f"Client secret not found in block. Please create a Secret block with name {block_name_prefix}-client-secret")
-        raise Exception(f"Error loading client secret: {e}")
-    try:
-        grant.request_token(username, Secret.load(f"{block_name_prefix}-password").get())
-    except ValueError as e:
-        logger.error(f"Password not found in block. Please create a Secret block with name {block_name_prefix}-password")
-        raise Exception(f"Error loading password: {e}")
-    except RequestTokenError as e:
-        logger.error(f"Error requesting token: {e}")
-        raise Exception(f"Error requesting token: {e}")
-
-    # Create MediaHaven client
-    client = MediaHaven(url, grant)
-    return client
 
 @task(name='Update metadata of fragment')
 def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : dict,) -> bool:

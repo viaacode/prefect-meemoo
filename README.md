@@ -1,12 +1,32 @@
 # Mediahaven
 ## Tasks
+- [get_client](#get_client)
 - [get_organisation](#get_organisation)
 - [search_organisations](#search_organisations)
 - [update_record](#update_record)
 - [get_field_definition](#get_field_definition)
 - [generate_record_json](#generate_record_json)
-- [get_client](#get_client)
 - [fragment_metadata_update](#fragment_metadata_update)
+### get_client
+get_client('block_name_prefix',)
+
+    Get a MediaHaven client.
+
+    Parameters:
+        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
+
+    Blocks:
+        - Secret:
+            - {block_name_prefix}-client-secret: Mediahaven API client secret
+            - {block_name_prefix}-password: Mediahaven API password
+        - String:
+            - {block_name_prefix}-client-id: Mediahaven API client ID
+            - {block_name_prefix}-username: Mediahaven API username
+            - {block_name_prefix}-url: Mediahaven API URL
+
+    Returns:
+        - MediaHaven client
+    
 ### get_organisation
 get_organisation('client', 'organisation_id')
 
@@ -85,26 +105,6 @@ generate_record_json('client', 'field_flat_key', 'value', 'merge_strategy')
 
     Returns:
         - json object  
-    
-### get_client
-get_client('block_name_prefix',)
-
-    Get a MediaHaven client.
-
-    Parameters:
-        - block_name_prefix: Prefix of the Block variables that contain the MediaHaven credentials
-
-    Blocks:
-        - Secret:
-            - {block_name_prefix}-client-secret: Mediahaven API client secret
-            - {block_name_prefix}-password: Mediahaven API password
-        - String:
-            - {block_name_prefix}-client-id: Mediahaven API client ID
-            - {block_name_prefix}-username: Mediahaven API username
-            - {block_name_prefix}-url: Mediahaven API URL
-
-    Returns:
-        - MediaHaven client
     
 ### fragment_metadata_update
 fragment_metadata_update('client', 'fragment_id', 'fields')
