@@ -1,10 +1,47 @@
 # Mediahaven
 ## Tasks
+- [get_organisation](#get_organisation)
+- [search_organisations](#search_organisations)
 - [update_record](#update_record)
 - [get_field_definition](#get_field_definition)
 - [generate_record_json](#generate_record_json)
 - [get_client](#get_client)
 - [fragment_metadata_update](#fragment_metadata_update)
+### get_organisation
+get_organisation('client', 'organisation_id')
+
+    Get an organisation from MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+        - organisation_id: ID of the organisation
+
+    Returns:
+        - organisation
+            - ID
+            - Name
+            - LongName
+            - ExternalID
+            - CustomProperties
+            - TenantGroup
+    
+### search_organisations
+search_organisations('client',)
+
+    Get a list of organisations from MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+
+    Returns:
+        - List of organisations
+            - ID
+            - Name
+            - LongName
+            - ExternalID
+            - CustomProperties
+            - TenantGroup
+    
 ### update_record
 update_record('client', 'fragment_id', 'xml', 'json')
 
@@ -20,7 +57,7 @@ update_record('client', 'fragment_id', 'xml', 'json')
         - True if the metadata was updated, False otherwise
     
 ### get_field_definition
-get_field_definition('client', 'field')
+get_field_definition('client', 'field_flat_key')
 
     Get the field definition from MediaHaven
 
@@ -35,7 +72,7 @@ get_field_definition('client', 'field')
             - Parent (Optional)
     
 ### generate_record_json
-generate_record_json('client', 'field', 'value', 'merge_strategy')
+generate_record_json('client', 'field_flat_key', 'value', 'merge_strategy')
 
     Generate a json object that can be used to update metadata in MediaHaven
 
@@ -62,7 +99,7 @@ get_client('block_name_prefix',)
             - {block_name_prefix}-client-secret: Mediahaven API client secret
             - {block_name_prefix}-password: Mediahaven API password
         - String:
-            - {block_name_prefix}-client_id: Mediahaven API client ID
+            - {block_name_prefix}-client-id: Mediahaven API client ID
             - {block_name_prefix}-username: Mediahaven API username
             - {block_name_prefix}-url: Mediahaven API URL
 
@@ -77,7 +114,7 @@ fragment_metadata_update('client', 'fragment_id', 'fields')
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
-        - fields: Dictionary with fields and values and optional merge strategies
+        - fields: Dictionary with field's flatkey and values and optional merge strategies
             ex: {"dcterms_created": {"value": "2022-01-01", "merge_strategy": "KEEP"}}
 
     Returns:

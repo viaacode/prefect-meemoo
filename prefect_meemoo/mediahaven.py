@@ -1,6 +1,6 @@
 import json
 from typing import List, Tuple
-import time
+
 
 from prefect import task, flow, get_run_logger
 from prefect.blocks.system import Secret, JSON, String
@@ -14,8 +14,60 @@ from mergedeep import merge
 '''
 --- Tasks ---
 '''
+@task(name="Get organisation")
+def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
+    '''
+    Get an organisation from MediaHaven
 
-@task
+    Parameters:
+        - client: MediaHaven client
+        - organisation_id: ID of the organisation
+
+    Returns:
+        - organisation
+            - ID
+            - Name
+            - LongName
+            - ExternalID
+            - CustomProperties
+            - TenantGroup
+    '''
+    logger = get_run_logger()
+    try:
+        organisation = json.loads(client.organisations.get(organisation_id=organisation_id).raw_response())
+        return organisation
+    except Exception as e:
+        logger.error(e)
+        raise e
+
+        
+@task(name="Search organisations")
+def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
+    '''
+    Get a list of organisations from MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+
+    Returns:
+        - List of organisations
+            - ID
+            - Name
+            - LongName
+            - ExternalID
+            - CustomProperties
+            - TenantGroup
+    '''
+    logger = get_run_logger()
+    try:
+        organisations = client.organisations.search(nrOfResults=1000, **query_params).raw_response()
+        for organisation in organisations["Results"]:
+            yield organisation
+    except Exception as e:
+        logger.error(e)
+        raise e
+        
+@task(name="Update record")
 def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
     '''
     Update metadata of a fragment.
@@ -29,7 +81,6 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
     Returns:
         - True if the metadata was updated, False otherwise
     '''
-    time.sleep(1)
     logger = get_run_logger()
     resp = None
     try:
@@ -37,12 +88,12 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
         logger.info(f"Updated: {fragment_id}")
         return resp
     except Exception as e:
-        logger.warning(e)
-        logger.warning("Not updated: " + fragment_id)
-        return resp
+        logger.error(e)
+        logger.error("Not updated: " + fragment_id)
+        raise e
 
-@task()
-def get_field_definition(client : MediaHaven, field: str) -> dict:
+@task(name="Get field definition")
+def get_field_definition(client : MediaHaven, field_flat_key: str) -> dict:
     '''
     Get the field definition from MediaHaven
 
@@ -58,14 +109,14 @@ def get_field_definition(client : MediaHaven, field: str) -> dict:
     '''
     logger = get_run_logger()
     try:
-        field_definition = json.loads(client.fields.get(field=field).raw_response)
+        field_definition = json.loads(client.fields.get(field=field_flat_key).raw_response)
     except Exception as e:
-        logger.error(f"Error getting field definition: {field}")
+        logger.error(f"Error getting field definition: {field_flat_key}")
         raise Exception(f"Error getting field definition: {e}")
     return field_definition
 
-@task()
-def generate_record_json(client : MediaHaven, field : str, value, merge_strategy : str = None) -> dict:
+@task(name="Generate record json")
+def generate_record_json(client : MediaHaven, field_flat_key : str, value, merge_strategy : str = None) -> dict:
     '''
     Generate a json object that can be used to update metadata in MediaHaven
 
@@ -82,34 +133,37 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
     SIMPLE_FIELDS = ["SimpleField", "DateField", "EnumField", "BooleanField", "LongField", "TimeCodeField", "EDTFField"]
 
     def check_valid_merge_strategy(merge_strategy):
-        if merge_strategy not in ["KEEP", "OVERWRITE", "MERGE", "SUBTRACT"]:
+        if merge_strategy not in ["KEEP", "OVERWRITE", "MERGE", "SUBTRACT", None]:
             logger.error(f"Invalid merge strategy: {merge_strategy}. Allowed values are KEEP, OVERWRITE, MERGE, SUBTRACT")
             raise ValueError(f"Invalid merge strategy: {merge_strategy}. Allowed values are KEEP, OVERWRITE, MERGE, SUBTRACT")
 
-    def get_field_definitions_block(field):
+    def get_field_definitions_block(field_flat_key):
         # Get the field definitions block
         try:
             field_definitions = JSON.load("mediahaven-field-definitions").value
         except ValueError as e:
             field_definitions = {}
         # Get and Transform the field definition to a dict containing Family, Type and Parent
-        if field not in field_definitions:
-            field_definition = get_field_definition.fn(client, field)
-            field_definitions[field] = {}
-            field_definitions[field]["Family"] = field_definition["Family"]
-            field_definitions[field]["Type"] = field_definition["Type"]
+        if field_flat_key not in field_definitions:
+            field_definition = get_field_definition.fn(client, field_flat_key)
+            field_definitions[field_flat_key] = {}
+            field_definitions[field_flat_key]["Family"] = field_definition["Family"]
+            field_definitions[field_flat_key]["Type"] = field_definition["Type"]
+            field_definitions[field_flat_key]["Key"] = field_definition["Key"]
             # Check if the field has a parent
             if field_definition["ParentId"]:
                 parent_field_definition = get_field_definition.fn(client, field_definition["ParentId"])
-                field_definitions[field]["Parent"] = parent_field_definition["FlatKey"]
-                logger.info(f"Found parent field: {field_definitions[field]['Parent']}")
+                field_definitions[field_flat_key]["Parent"] = parent_field_definition["FlatKey"]
                 # Save the parent field definition if it's not already in the field definitions
-                if field_definitions[field]["Parent"] not in field_definitions:
+                if field_definitions[field_flat_key]["Parent"] not in field_definitions:
+                    field_definitions[field_definitions[field_flat_key]["Parent"]] = {}
                     field_definitions[parent_field_definition["FlatKey"]]["Family"] = parent_field_definition["Family"]
                     field_definitions[parent_field_definition["FlatKey"]]["Type"] = parent_field_definition["Type"]
-                    if parent_field_definition["Parent"]:
-                        logger.error(f"ComplexFields containing ComplexFields not supported: {field}")
-                        raise ValueError(f"ComplexFields containing ComplexFields not supported: {field}")
+                    field_definitions[parent_field_definition["FlatKey"]]["Key"] = parent_field_definition["Type"]
+                    if parent_field_definition["ParentId"]:
+                        logger.info(f"Parent of parent field: {parent_field_definition['ParentId']}")
+                        logger.error(f"ComplexFields containing ComplexFields not supported: {field_flat_key}")
+                        raise ValueError(f"ComplexFields containing ComplexFields not supported: {field_flat_key}")
             # Save the field definitions in JSON block
             try:
                 JSON(value=field_definitions).save("mediahaven-field-definitions", overwrite=True)
@@ -122,32 +176,33 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
     # Generate the JSON
     json_dict = {'Metadata': {}}
     # Get the field definitions
-    field_definitions = get_field_definitions_block(field)
-    field_definition = field_definitions[field]
+    field_definitions = get_field_definitions_block(field_flat_key)
+    field_definition = field_definitions[field_flat_key]
     # Add field and value to generated JSON
     if "Parent" not in field_definition:
         # SimpleFields without a parent field
         if field_definition["Type"] in SIMPLE_FIELDS:
-            json_dict['Metadata'][field_definition["Family"]]= {field : value}
+            json_dict['Metadata'][field_definition["Family"]]= {field_flat_key : value}
         # ComplexFields without a parent field
         else : 
-            logger.error(f"ComplexFields without a parent field are not yet supported: {field}")
-            raise Exception("ComplexFields without a parent field are not yet supported")
+            logger.error(f"ComplexFields are not yet supported (only children): {field_flat_key} ")
+            raise Exception("ComplexFields are not yet supported (only children)")
     # Check type of parent
     elif field_definitions[field_definition["Parent"]]["Type"] == "MultiItemField":
         # SimpleFields with a parent field like MultiItemField
         if field_definition["Type"] == "SimpleField":
-            json_dict['Metadata'][field_definition["Family"]]= {field_definition["Parent"] : {field : [value]}}
+            json_dict['Metadata'][field_definition["Family"]]= {field_definition["Parent"] : {field_definition["Key"] : [value]}}
         if merge_strategy:
             check_valid_merge_strategy(merge_strategy)
-            json_dict['Metadata']['MergeStrategies'][field] = merge_strategy
+            json_dict['Metadata']['MergeStrategies'] = {}
+            json_dict['Metadata']['MergeStrategies'][field_definition["Parent"]] = merge_strategy
     else: 
-        logger.error(f"Only ComplexFields of type MultiItemField are supported for now: {field}")
+        logger.error(f"Only ComplexFields of type MultiItemField are supported for now: {field_flat_key}")
         raise Exception("Only ComplexFields of type MultiItemField are supported for now")
 
     return json_dict
 
-@task()
+@task(name='Get MediaHaven client')
 def get_client(block_name_prefix: str) -> MediaHaven:
     '''
     Get a MediaHaven client.
@@ -160,7 +215,7 @@ def get_client(block_name_prefix: str) -> MediaHaven:
             - {block_name_prefix}-client-secret: Mediahaven API client secret
             - {block_name_prefix}-password: Mediahaven API password
         - String:
-            - {block_name_prefix}-client_id: Mediahaven API client ID
+            - {block_name_prefix}-client-id: Mediahaven API client ID
             - {block_name_prefix}-username: Mediahaven API username
             - {block_name_prefix}-url: Mediahaven API URL
 
@@ -184,6 +239,7 @@ def get_client(block_name_prefix: str) -> MediaHaven:
     except ValueError as e:
         logger.error(f"Username not found in block. Please create a String block with name {block_name_prefix}-username")
         raise Exception(f"Error loading username: {e}")
+
     # Get OAuth2 Client and request token
     try:
         grant = ROPCGrant(url, client_id, Secret.load(f"{block_name_prefix}-client-secret").get())
@@ -198,11 +254,12 @@ def get_client(block_name_prefix: str) -> MediaHaven:
     except RequestTokenError as e:
         logger.error(f"Error requesting token: {e}")
         raise Exception(f"Error requesting token: {e}")
+
     # Create MediaHaven client
     client = MediaHaven(url, grant)
     return client
 
-@task()
+@task(name='Update metadata of fragment')
 def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : dict,) -> bool:
     '''
     Generate JSON for updating metadata of a fragment and update in MediaHaven.
@@ -210,7 +267,7 @@ def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : di
     Parameters:
         - client: MediaHaven client
         - fragment_id: MediaHaven fragment id
-        - fields: Dictionary with fields and values and optional merge strategies
+        - fields: Dictionary with field's flatkey and values and optional merge strategies
             ex: {"dcterms_created": {"value": "2022-01-01", "merge_strategy": "KEEP"}}
 
     Returns:
@@ -220,8 +277,9 @@ def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : di
     logger = get_run_logger()
     # Get JSON format for MediaHaven metadata update
     json_dict = {}
-    for field, content in fields.items():
-        merge(json_dict, generate_record_json.fn(client, field, content["value"], content["merge_strategy"]))
+    for field_flat_key, content in fields.items():
+        merge(json_dict, generate_record_json.fn(client, field_flat_key, content["value"], content["merge_strategy"]))
+    logger.info(f"JSON for updating metadata of fragment_id: {fragment_id}: {json_dict}")
     # Update metadata
     resp = update_record.fn(client, fragment_id, json=json_dict)
     return resp
@@ -230,14 +288,14 @@ def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : di
 --- Flows ---
 '''
 
-@flow(name="mediahaven-update-single-record-flow")
+@flow(name="new name")
 def update_single_value_flow(fragment_id: str, field_flat_key: str, value, ):
     '''
     Flow to update metadata in MediaHaven.
 
     Parameters:
         - fragment_id: ID of the record to update
-        - field: FlatKey of the field to update
+        - field_flat_key: FlatKey of the field to update
         - value: Value of the field to update
 
     Blocks:
