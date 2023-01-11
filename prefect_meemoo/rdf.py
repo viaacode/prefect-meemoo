@@ -12,7 +12,7 @@ from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
 
-from prefect_meemoo.rdf_parse import parse_json
+from prefect_meemoo.rdf_parse import parse_json, parse_dict
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
@@ -336,6 +336,27 @@ def json_to_rdf(*input_data: str, ns: str = SRC_NS):
             continue
 
         for t in parse_json(data, namespace=Namespace(ns)):
+            g.add(t)
+    return g.serialize(format="nt")
+
+@task(name="convert python dict to rdf")
+def dict_to_rdf(*input_data: dict, ns: str = SRC_NS):
+    """
+    Converts Python dict objects to RDF by direct mapping
+
+    Args:
+        input_data*: arbitrary list of dict to map
+        ns (str, optional): Namespace to use to build RDF predicates. Defaults to https://data.hetarchief.be/ns/source#.
+
+    Returns:
+        str: ntriples serialization of the result
+    """
+    g = Graph(store="Oxigraph")
+    for data in input_data:
+        if data is None:
+            continue
+
+        for t in parse_dict(data, namespace=Namespace(ns)):
             g.add(t)
     return g.serialize(format="nt")
 
