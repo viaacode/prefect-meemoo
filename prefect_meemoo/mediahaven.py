@@ -238,7 +238,7 @@ def update_single_value_flow(fragment_id: str, field_flat_key: str, value, ):
 
     '''
     # Create MediaHaven client
-    client = get_client.fn(creds)
+    client = get_client.fn("mediahaven-prd")
     # Update metadata
     resp = fragment_metadata_update(client, fragment_id, {field_flat_key : {"value" : value}})
 
