@@ -1,13 +1,18 @@
 import json
-from typing import List, Tuple
+
+import time
+
+from prefect import task, flow, get_run_logger
+from prefect.blocks.system import JSON
+from prefect.filesystems import LocalFileSystem
 
 from mediahaven import MediaHaven
 from mediahaven.mediahaven import MediaHavenException
-from mediahaven.oauth2 import RequestTokenError, ROPCGrant
+from mediahaven.oauth2 import RequestTokenError
+
 from mergedeep import merge
-from prefect import flow, get_run_logger, task
-from prefect.blocks.system import JSON, Secret, String
-from prefect.filesystems import LocalFileSystem
+
+from prefect_meemoo.credentials import MediahavenCredentials
 
 '''
 --- Tasks ---
@@ -305,7 +310,6 @@ def generate_record_json(client : MediaHaven, field_flat_key : str, value, merge
     return json_dict
 
 
-
 @task(name='Update metadata of fragment')
 def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : dict,) -> bool:
     '''
@@ -346,17 +350,26 @@ def update_single_value_flow(fragment_id: str, field_flat_key: str, value, ):
         - value: Value of the field to update
 
     Blocks:
-        - Secret:
-            - {block_name_prefix}-client-secret: Mediahaven API client secret
-            - {block_name_prefix}-password: Mediahaven API password
-        - String:
-            - {block_name_prefix}-client_id: Mediahaven API client ID
-            - {block_name_prefix}-username: Mediahaven API username
-            - {block_name_prefix}-url: Mediahaven API URL
+        - MediahavenCredentials:
+            - client_secret: Mediahaven API client secret
+            - password: Mediahaven API password
+            - client_id: Mediahaven API client ID
+            - username: Mediahaven API username
+            - url: Mediahaven API URL
 
     '''
+    # Get Prefect logger
+    logger = get_run_logger()
     # Create MediaHaven client
-    client = get_client.fn("mediahaven-prd")
+    try:
+        client = MediahavenCredentials.load("mediahaven").get_client("mediahaven-prd")
+    except ValueError as e: 
+        logger.error(f"Error loading block: {e}")
+        raise e
+    except RequestTokenError as e:
+        logger.error(f"Error requesting token: {e}")
+        raise e
+
     # Update metadata
     resp = fragment_metadata_update(client, fragment_id, {field_flat_key : {"value" : value}})
 
