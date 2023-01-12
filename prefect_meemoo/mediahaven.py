@@ -127,19 +127,21 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
         logger.error("Not updated: " + fragment_id)
         raise e
 
-@task(cache_result_in_memory=False, persist_result=True, result_storage=LocalFileSystem(basepath='/tmp'))
+@task(name="Search mediahaven records", cache_result_in_memory=False, persist_result=True, result_storage=LocalFileSystem(basepath='/tmp'))
 def search_records(
     client: MediaHaven, query : str, last_modified_date=None, start_index=0, nr_of_results=100
 ) -> dict:
 
     """
     Task to query MediaHaven with a given query.
+
     Parameters:
         - client (MediaHaven): MediaHaven client
         - query (str): Query to execute
         - last_modified_date (str): Last Updated data to filter on
         - start_index (int): Start index of the query
         - nr_of_results (int): Number of results to return
+
     Returns:
         - dict: Dictionary containing the results of the query  
     """

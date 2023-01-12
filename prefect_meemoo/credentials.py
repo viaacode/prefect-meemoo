@@ -18,7 +18,7 @@ class MediahavenCredentials(Block):
     Example:
         Load stored Mediahaven credentials:
         ```python
-        from prefect_meemoo import MediahavenCredentials
+        from prefect_meemoo.credentials import MediahavenCredentials
         credentials = MediahavenCredentials.load("BLOCK_NAME")
         ```
     """
