@@ -7,6 +7,7 @@ from mediahaven.oauth2 import RequestTokenError, ROPCGrant
 from mergedeep import merge
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import JSON, Secret, String
+from prefect.filesystems import LocalFileSystem
 
 '''
 --- Tasks ---
@@ -69,6 +70,10 @@ def get_client(block_name_prefix: str) -> MediaHaven:
     client = MediaHaven(url, grant)
     return client
 
+'''
+--- Organisations ---
+'''
+
 @task(name="Get organisation")
 def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
     '''
@@ -120,7 +125,38 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
     except Exception as e:
         logger.error(e)
         raise e
-        
+
+'''
+--- Field definitions ---
+'''
+
+@task(name="Get field definition")
+def get_field_definition(client : MediaHaven, field_flat_key: str) -> dict:
+    '''
+    Get the field definition from MediaHaven
+
+    Parameters:
+        - client: MediaHaven client
+        - field: Name of the field
+
+    Returns:
+        - field definition containing the following keys:
+            - Family
+            - Type
+            - Parent (Optional)
+    '''
+    logger = get_run_logger()
+    try:
+        field_definition = json.loads(client.fields.get(field=field_flat_key).raw_response)
+    except Exception as e:
+        logger.error(f"Error getting field definition: {field_flat_key}")
+        raise Exception(f"Error getting field definition: {e}")
+    return field_definition
+
+'''
+--- Records ---
+'''
+
 @task(name="Update record")
 def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
     '''
@@ -146,28 +182,40 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
         logger.error("Not updated: " + fragment_id)
         raise e
 
-@task(name="Get field definition")
-def get_field_definition(client : MediaHaven, field_flat_key: str) -> dict:
-    '''
-    Get the field definition from MediaHaven
+    
+@task(cache_result_in_memory=False, persist_result=True, result_storage=LocalFileSystem(basepath='/tmp'))
+def search_records(
+    client: MediaHaven, query : str, last_modified_date=None, start_index=0, nr_of_results=100
+) -> dict:
 
+    """
+    Task to query MediaHaven with a given query.
     Parameters:
-        - client: MediaHaven client
-        - field: Name of the field
-
+        - client (MediaHaven): MediaHaven client
+        - query (str): Query to execute
+        - last_modified_date (str): Last Updated data to filter on
+        - start_index (int): Start index of the query
+        - nr_of_results (int): Number of results to return
     Returns:
-        - field definition containing the following keys:
-            - Family
-            - Type
-            - Parent (Optional)
-    '''
+        - dict: Dictionary containing the results of the query  
+    """
     logger = get_run_logger()
+    # Adding LastModified to query
+    if last_modified_date:
+        query += f'AND +(LastModifiedDate:[{last_modified_date} TO *])'
+
     try:
-        field_definition = json.loads(client.fields.get(field=field_flat_key).raw_response)
-    except Exception as e:
-        logger.error(f"Error getting field definition: {field_flat_key}")
-        raise Exception(f"Error getting field definition: {e}")
-    return field_definition
+        records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, )
+        logger.info(
+            f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "outcome_status": "SUCCESS"}}"""
+        )
+        logger.info("TotalNrOfResults: " + str(records_page.page_result.TotalNrOfResults))
+        return json.loads(records_page.raw_response), records_page.has_more
+    except Exception as error:
+        logger.error(
+            f"""{{ "outcome_status": "FAIL", "status_message": {error}}}"""
+        )
+        raise error
 
 @task(name="Generate record json")
 def generate_record_json(client : MediaHaven, field_flat_key : str, value, merge_strategy : str = None) -> dict:
