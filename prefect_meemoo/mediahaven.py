@@ -1,16 +1,13 @@
 import json
 from typing import List, Tuple
 
-
-from prefect import task, flow, get_run_logger
-from prefect.blocks.system import Secret, JSON, String
-
-
 from mediahaven import MediaHaven
 from mediahaven.mediahaven import MediaHavenException
-from mediahaven.oauth2 import ROPCGrant, RequestTokenError
-
+from mediahaven.oauth2 import RequestTokenError, ROPCGrant
 from mergedeep import merge
+from prefect import flow, get_run_logger, task
+from prefect.blocks.system import JSON, Secret, String
+
 '''
 --- Tasks ---
 '''
@@ -118,9 +115,8 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
     '''
     logger = get_run_logger()
     try:
-        organisations = client.organisations.search(nrOfResults=1000, **query_params).raw_response()
-        for organisation in organisations["Results"]:
-            yield organisation
+        organisations = json.loads(client.organisations.search(nrOfResults=1000, **query_params).raw_response)
+        return organisations['Results']
     except Exception as e:
         logger.error(e)
         raise e
