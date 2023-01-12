@@ -174,12 +174,12 @@ def get_client(block_name: str) -> MediaHaven:
 
     # TODO Guards still needed since this is moved to existing logic in blocks?
     try:
-        grant = ROPCGrant(creds.url, creds.client_id, creds.client_secret)
+        grant = ROPCGrant(creds.url, creds.client_id, creds.client_secret.get_secret_value())
     except ValueError as e: 
         logger.error(f"Client secret not found in block. Please create a Secret block with name {block_name}")
         raise Exception(f"Error loading client secret: {e}")
     try:
-        grant.request_token(creds.username, creds.password)
+        grant.request_token(creds.username, creds.password.get_secret_value())
     except ValueError as e:
         logger.error(f"Password not found in block. Please create a Secret block with name {block_name}")
         raise Exception(f"Error loading password: {e}")
