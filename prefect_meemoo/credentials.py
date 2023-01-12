@@ -1,5 +1,7 @@
 from prefect.blocks.core import Block
 from pydantic import Field, SecretStr
+from mediahaven import MediaHaven
+from mediahaven.oauth2 import ROPCGrant
 
 
 class MediahavenCredentials(Block):
@@ -31,3 +33,21 @@ class MediahavenCredentials(Block):
     client_id: str = Field(default="", description="Mediahaven API client ID.")
     username: str = Field(default="", description="Mediahaven API username.")
     url: str = Field(default="", description="Mediahaven API URL.")
+
+    def get_client(self) -> MediaHaven:
+        '''
+        Helper method to get a MediaHaven client.
+
+        Returns:
+            - An authenticated MediaHaven client
+
+        Raises:
+            - ValueError: if the authentication failed.
+            - RequestTokenError: is the token cannot be requested
+        '''
+
+        grant = ROPCGrant(self.url, self.client_id, self.client_secret.get_secret_value())
+        grant.request_token(self.username, self.password.get_secret_value())
+        # Create MediaHaven client
+        client = MediaHaven(self.url, grant)
+        return client

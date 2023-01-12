@@ -6,7 +6,7 @@ from prefect.blocks.system import JSON
 
 from mediahaven import MediaHaven
 from mediahaven.mediahaven import MediaHavenException
-from mediahaven.oauth2 import ROPCGrant, RequestTokenError
+from mediahaven.oauth2 import RequestTokenError
 
 from mergedeep import merge
 
@@ -149,48 +149,6 @@ def generate_record_json(client : MediaHaven, field : str, value, merge_strategy
     return json_dict
 
 @task()
-def get_client(block_name: str) -> MediaHaven:
-    '''
-    Get a MediaHaven client.
-
-    Parameters:
-        - block_name: Name of the block that contains the MediaHaven credentials
-
-    Blocks:
-        - MediahavenCredentials:
-            - client_secret: Mediahaven API client secret
-            - password: Mediahaven API password
-            - client_id: Mediahaven API client ID
-            - username: Mediahaven API username
-            - url: Mediahaven API URL
-
-    Returns:
-        - MediaHaven client
-    '''
-    logger = get_run_logger()
-    # Get the credentials
-    creds = MediahavenCredentials.load(block_name)
-    # Get OAuth2 Client and request token
-
-    # TODO Guards still needed since this is moved to existing logic in blocks?
-    try:
-        grant = ROPCGrant(creds.url, creds.client_id, creds.client_secret.get_secret_value())
-    except ValueError as e: 
-        logger.error(f"Client secret not found in block. Please create a Secret block with name {block_name}")
-        raise Exception(f"Error loading client secret: {e}")
-    try:
-        grant.request_token(creds.username, creds.password.get_secret_value())
-    except ValueError as e:
-        logger.error(f"Password not found in block. Please create a Secret block with name {block_name}")
-        raise Exception(f"Error loading password: {e}")
-    except RequestTokenError as e:
-        logger.error(f"Error requesting token: {e}")
-        raise Exception(f"Error requesting token: {e}")
-    # Create MediaHaven client
-    client = MediaHaven(creds.url, grant)
-    return client
-
-@task()
 def fragment_metadata_update(client : MediaHaven, fragment_id : str, fields : dict,) -> bool:
     '''
     Generate JSON for updating metadata of a fragment and update in MediaHaven.
@@ -237,8 +195,18 @@ def update_single_value_flow(fragment_id: str, field_flat_key: str, value, ):
             - url: Mediahaven API URL
 
     '''
+    # Get Prefect logger
+    logger = get_run_logger()
     # Create MediaHaven client
-    client = get_client.fn("mediahaven-prd")
+    try:
+        client = MediahavenCredentials.load("mediahaven").get_client("mediahaven-prd")
+    except ValueError as e: 
+        logger.error(f"Error loading block: {e}")
+        raise e
+    except RequestTokenError as e:
+        logger.error(f"Error requesting token: {e}")
+        raise e
+
     # Update metadata
     resp = fragment_metadata_update(client, fragment_id, {field_flat_key : {"value" : value}})
 
