@@ -84,7 +84,7 @@ def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
         - organisation_id: ID of the organisation
 
     Returns:
-        - organisation
+        - organisation (dict)
             - ID
             - Name
             - LongName
@@ -110,7 +110,7 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
         - client: MediaHaven client
 
     Returns:
-        - Generator of organisations
+        - List of all organisations in MediaHaven (list of dicts)
             - ID
             - Name
             - LongName
@@ -140,7 +140,7 @@ def get_field_definition(client : MediaHaven, field_flat_key: str) -> dict:
         - field: Name of the field
 
     Returns:
-        - field definition containing the following keys:
+        - field definition (dict)
             - Family
             - Type
             - Parent (Optional)
