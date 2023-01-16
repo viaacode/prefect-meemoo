@@ -27,7 +27,6 @@ class LastRunConfig(Block):
 
     last_run: str = Field(default=datetime.datetime.today().strftime("%Y-%m-%d"), description="The last time the flow ran.")
     flow_name: str = Field(default=(...), description="The name of the flow.")
-    random: str = Field(default=(...), description="A random string to force a new block version.")
 
     _block_schema_capabilities = ["meemoo-prefect", "config"]
     
