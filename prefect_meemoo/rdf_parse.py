@@ -1,5 +1,6 @@
-import ijson
 from collections import deque
+
+import ijson
 from rdflib import BNode, Literal, Namespace
 
 
