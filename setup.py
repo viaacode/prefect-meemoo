@@ -11,7 +11,7 @@ with open("README.md") as readme_file:
 
 setup(
     name="prefect-meemoo",
-    version="0.3.1-dev.1",
+    version="0.3.1",
     description="Meemoo Prefect collection with common tasks",
     license="Apache License 2.0",
     author="Lennert Van de Velde",
