@@ -313,9 +313,8 @@ def compare(input_data1: str, input_data2: str):
 
     in_both, in_first, in_second = graph_diff(iso1, iso2)
     logger.info(
-        "In first: %s, In second %s",
-        in_first.serialize(format="nt"),
-        in_second.serialize(format="nt"),
+        '-'.join(('\n'+in_first.serialize(format="nt").lstrip()).splitlines(True)) +
+        '+'.join(('\n'+in_second.serialize(format="nt").lstrip()).splitlines(True))
     )
     return iso1 == iso2
 
