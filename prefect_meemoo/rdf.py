@@ -5,13 +5,14 @@ from typing import Any, Dict, Optional
 import pandas as pd
 import requests
 from prefect import get_run_logger, task
-from prefect_meemoo.rdf_parse import parse_dict, parse_json
 from pyshacl import validate
 from rdflib import ConjunctiveGraph, Graph, Namespace, URIRef
 from rdflib.compare import graph_diff, to_isomorphic
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
+
+from prefect_meemoo.rdf_parse import parse_dict, parse_json
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
@@ -47,12 +48,13 @@ def sparql_gsp_post(
         - True if the POST was successful, False otherwise
     """
     graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    input_text = resolve_text(input_data)
     req = requests.post(
         url=graph_endpoint,
         headers={"Content-Type": content_type},
         timeout=timeout,
         auth=auth,
-        data=input_data,
+        data=input_text,
     )
     if req.status_code >= 400:
         raise Exception(f"POST request to {graph_endpoint} failed: {req.status_code}")
@@ -84,12 +86,13 @@ def sparql_gsp_put(
         - True if the PUT was successful, False otherwise
     """
     graph_endpoint = f"{endpoint}?graph={graph}" if graph is not None else endpoint
+    input_text = resolve_text(input_data)
     req = requests.put(
         url=graph_endpoint,
         headers={"Content-Type": content_type},
         timeout=timeout,
         auth=auth,
-        data=input_data,
+        data=input_text,
     )
     if req.status_code >= 400:
         raise Exception(f"PUT request to {graph_endpoint} failed: {req.status_code}")
@@ -338,6 +341,7 @@ def json_to_rdf(*input_data: str, ns: str = SRC_NS):
             g.add(t)
     return g.serialize(format="nt")
 
+
 @task(name="convert python dict to rdf")
 def dict_to_rdf(*input_data: dict, ns: str = SRC_NS):
     """
@@ -435,12 +439,14 @@ def validate_ntriples(input_data: str, shacl_graph: str, ont_graph: str = None):
 
     logger = get_run_logger()
     input_graph = Graph()
-    input_graph.parse(data=input_data)
+    input_text = resolve_text(input_data)
+
+    input_graph.parse(data=input_text)
 
     r = validate(
         input_graph,
         shacl_graph=shacl_graph,
-        # ont_graph=ont_graph,
+        ont_graph=ont_graph,
         allow_infos=True,
         allow_warnings=True,
     )
