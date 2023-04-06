@@ -37,9 +37,9 @@ class MediahavenCredentials(Block):
     url: str = Field(default=(...), description="Mediahaven API URL.")
 
     _block_schema_capabilities = ["meemoo-prefect", "credentials"]
-    
+
     def get_client(self) -> MediaHaven:
-        '''
+        """
         Helper method to get a MediaHaven client.
 
         Returns:
@@ -48,9 +48,11 @@ class MediahavenCredentials(Block):
         Raises:
             - ValueError: if the authentication failed.
             - RequestTokenError: is the token cannot be requested
-        '''
+        """
 
-        grant = ROPCGrant(self.url, self.client_id, self.client_secret.get_secret_value())
+        grant = ROPCGrant(
+            self.url, self.client_id, self.client_secret.get_secret_value()
+        )
         grant.request_token(self.username, self.password.get_secret_value())
         # Create MediaHaven client
         client = MediaHaven(self.url, grant)
@@ -80,16 +82,16 @@ class ElasticsearchCredentials(Block):
     password: SecretStr = Field(default=(...), description="Elasticsearch password.")
     username: str = Field(default=(...), description="Elasticsearch username.")
     url: str = Field(default=(...), description="Elasticsearch URL.")
-    
+
     _block_schema_capabilities = ["meemoo-prefect", "credentials"]
 
     def get_client(self) -> Elasticsearch:
-        '''
+        """
         Helper method to get an Elasticsearch client.
 
         Returns:
             - An authenticated Elasticsearch client
-        '''
+        """
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         client = Elasticsearch(
@@ -98,6 +100,7 @@ class ElasticsearchCredentials(Block):
             verify_certs=False,
         )
         return client
+
 
 class PostgresCredentials(Block):
     """
@@ -120,10 +123,44 @@ class PostgresCredentials(Block):
     _block_type_name = "Postgres Credentials"
     _logo_url = "https://www.postgresql.org/media/img/about/press/elephant.png"
 
-    password: SecretStr = Field(default ="", description="Postgres password.")
+    password: SecretStr = Field(default="", description="Postgres password.")
     username: str = Field(default=(...), description="Postgres username.")
     host: str = Field(default=(...), description="Postgres URL.")
     port: int = Field(default=(...), description="Postgres port.")
 
     _block_schema_capabilities = ["meemoo-prefect", "credentials"]
 
+
+class TriplyDBCredentials(Block):
+    """
+    Block used to manage authentication with TriplyDB.
+
+    Attributes:
+        token: The JWT token of the user
+        owner: The user or organization that owns the dataset
+        dataset: "Name of the default dataset.
+        graph: Name of the default Named Graph in the dataset.
+        host: TriplyDB HTTP host address
+
+    Example:
+        Load stored TriplyDB credentials:
+        ```python
+        from prefect_meemoo.credentials import TriplyDBCredentials
+        credentials = TriplyDBCredentials.load("BLOCK_NAME")
+        ```
+    """
+
+    _block_type_name = "TriplyDB Credentials"
+    _logo_url = "https://triplydb.com/imgs/logos/logo-lg.svg"
+
+    token: SecretStr = Field(default="", description="The JWT token of the user.")
+    owner: str = Field(
+        default=(...), description="The user or organization that owns the dataset."
+    )
+    dataset: str = Field(default=(...), description="Name of the default dataset.")
+    graph: str = Field(
+        default=(...), description="Name of the default Named Graph in the dataset."
+    )
+    host: str = Field(default=(...), description="TriplyDB HTTP host address.")
+
+    _block_schema_capabilities = ["meemoo-prefect", "credentials"]
