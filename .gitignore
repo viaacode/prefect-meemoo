@@ -139,3 +139,6 @@ dmypy.json
 
 # Nodejs
 node_modules
+*.ttl
+ratt.err
+
