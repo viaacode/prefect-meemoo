@@ -1,5 +1,4 @@
 import { a, forEach, fromJson, iri, logRecord, Ratt, toRdf, triple, when } from '@triplydb/ratt'
-import { change } from '@triplydb/ratt/lib/middlewares/transforming/custom/change'
 import { sdo } from '@triplydb/ratt/lib/vocab'
 
 export default async function () : Promise<Ratt> {
