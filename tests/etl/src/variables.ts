@@ -1,15 +1,16 @@
-import { literal, a, forEach, fromJson, iri, logRecord, Ratt, toRdf, triple, when, str } from '@triplydb/ratt'
-import { rdfs } from '@triplydb/ratt/lib/vocab'
+import { Etl,  declarePrefix,  toRdf, Destination } from "@triplyetl/etl/generic";
+import {  triple,  str,  iri } from "@triplyetl/etl/ratt";
+import {  rdfs } from "@triplyetl/etl/vocab";
 
-export default async function () : Promise<Ratt> {
-    const app = new Ratt()
+export default async function () : Promise<Etl> {
+    const app = new Etl()
     const prefixes = {
-        id: Ratt.prefixer('https://data.hetarchief.be/id/')
+        id: declarePrefix('https://data.hetarchief.be/id/')
     }
 
     app.use(
         triple(iri(prefixes.id, str('Jane')), rdfs.label, str(process.env.TEST)),
-        toRdf(Ratt.Destination.file('./static/output-variables.ttl'))
+        toRdf(Destination.file('./static/output-variables.ttl'))
     )
     return app
 }

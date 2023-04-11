@@ -1,6 +1,6 @@
 import os
-import subprocess
 import re
+import subprocess
 from pathlib import Path
 
 from prefect import get_run_logger, task
@@ -11,6 +11,7 @@ from prefect.states import Failed
 # task_run_name="triplyetl-{name}-on-{date:%A}")
 def run_triplyetl(etl_script_path: str, **kwargs: str):
     logger = get_run_logger()
+    logger.info("Running TriplyETL script: " + etl_script_path)
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = Path(etl_script_path).resolve()
     etl_folder_abspath = os.path.dirname(etl_script_abspath)
@@ -21,7 +22,7 @@ def run_triplyetl(etl_script_path: str, **kwargs: str):
         etl_env[key.upper()] = value
 
     p = subprocess.Popen(
-        ["yarn", "ratt", etl_script_abspath],
+        ["yarn", "etl", etl_script_abspath],
         cwd=etl_folder_abspath,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

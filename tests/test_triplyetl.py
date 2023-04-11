@@ -1,6 +1,5 @@
-from prefect import flow
 import pytest
-
+from prefect import flow
 from prefect_meemoo.triply import run_triplyetl
 
 

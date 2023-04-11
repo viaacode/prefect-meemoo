@@ -1,9 +1,9 @@
 {
   "scripts": {
-    "etl": "tsc; yarn ratt ./dist/index.js"
+    "build": "./node_modules/.bin/tsc"
   },
   "dependencies": {
-    "@triplydb/ratt": "^5.0.0-rc.14",
+    "@triplyetl/etl": "^1.0.1-rc.4",
     "typescript": "^4.9.4"
   }
 }
