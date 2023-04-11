@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
+from prefect.blocks.core import Block, SecretStr
 
 from prefect import get_run_logger, task
 from prefect.states import Failed
@@ -9,7 +10,7 @@ from prefect.states import Failed
 
 @task(name="Run TriplyETL", description="Runs an TriplyETL script.")
 # task_run_name="triplyetl-{name}-on-{date:%A}")
-def run_triplyetl(etl_script_path: str, **kwargs: str):
+def run_triplyetl(etl_script_path: str, **kwargs):
     logger = get_run_logger()
     logger.info("Running TriplyETL script: " + etl_script_path)
     # Resolve absolute path of TriplyETL script
@@ -19,7 +20,15 @@ def run_triplyetl(etl_script_path: str, **kwargs: str):
     # Create an environment for subprocess
     etl_env = os.environ.copy()
     for key, value in kwargs.items():
-        etl_env[key.upper()] = value
+        # If a prefect block is given, make members available in ENV
+        if issubclass(type(value), Block):
+            for b_key, b_value in Block(value).dict().items():
+                if isinstance(b_value, SecretStr):
+                    etl_env[f"{key.upper()}_{b_key.upper}"] = b_value.get_secret_value()
+                else:
+                    etl_env[f"{key.upper()}_{b_key.upper}"] = b_value
+        else:
+            etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
         ["yarn", "etl", etl_script_abspath],
