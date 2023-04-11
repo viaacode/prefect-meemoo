@@ -141,4 +141,9 @@ dmypy.json
 node_modules
 *.ttl
 ratt.err
+.npmrc
+.pnp.cjs
+.pnp.loader.mjs
+.yarn/
+.yarnrc.yml
 
