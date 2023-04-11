@@ -335,6 +335,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@comunica/actor-init-sparql@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@comunica/actor-init-sparql@npm:2.0.1::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40comunica%2Factor-init-sparql%2F-%2Factor-init-sparql-2.0.1.tgz"
+  checksum: 1a50f0de86dfd2eb9996f91104cfa2e63aa7dbe48227782ecbeb48e0e4d87fc06c11006fc54653ce460e3ecdaec207b91fbaa70bff23789167783947da02835a
+  languageName: node
+  linkType: hard
+
 "@comunica/actor-optimize-query-operation-join-bgp@npm:^1.22.0":
   version: 1.22.0
   resolution: "@comunica/actor-optimize-query-operation-join-bgp@npm:1.22.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40comunica%2Factor-optimize-query-operation-join-bgp%2F-%2Factor-optimize-query-operation-join-bgp-1.22.0.tgz"
@@ -2491,7 +2498,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^18.0.0":
+"@types/node@npm:*, @types/node@npm:^18.0.0, @types/node@npm:^18.15.11":
   version: 18.15.11
   resolution: "@types/node@npm:18.15.11::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40types%2Fnode%2F-%2Fnode-18.15.11.tgz"
   checksum: 977b4ad04708897ff0eb049ecf82246d210939c82461922d20f7d2dcfd81bbc661582ba3af28869210f7e8b1934529dcd46bff7d448551400f9d48b9d3bddec3
@@ -4782,7 +4789,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"n3@npm:^1.11.1, n3@npm:^1.16.3, n3@npm:^1.6.3":
+"n3@npm:^1.11.1, n3@npm:^1.16.3, n3@npm:^1.16.4, n3@npm:^1.6.3":
   version: 1.16.4
   resolution: "n3@npm:1.16.4::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Fn3%2F-%2Fn3-1.16.4.tgz"
   dependencies:
@@ -5442,7 +5449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^4.0.0":
+"readable-stream@npm:^4.0.0, readable-stream@npm:^4.3.0":
   version: 4.3.0
   resolution: "readable-stream@npm:4.3.0::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2Freadable-stream%2F-%2Freadable-stream-4.3.0.tgz"
   dependencies:
@@ -5547,7 +5554,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
+    "@comunica/actor-init-sparql": ^2.0.1
     "@triplyetl/etl": ^1.0.1-rc.4
+    "@types/node": ^18.15.11
+    lodash: ^4.17.21
+    n3: ^1.16.4
+    readable-stream: ^4.3.0
     typescript: ^4.9.4
   languageName: unknown
   linkType: soft

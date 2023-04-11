@@ -33,7 +33,7 @@ def test_run_triplyetl():
 
 
 def test_add_block_as_variables():
-    @flow(name="prefect_flow_triplyetl")
+    @flow(name="prefect_flow_triplyetl_block")
     def test_flow():
         run_triplyetl(
             etl_script_path="./tests/etl/dist/variables_block.js",
@@ -78,5 +78,5 @@ def test_run_triplyetl_with_error():
     def test_flow():
         run_triplyetl(etl_script_path="./tests/etl/dist/error.js")
 
-    with pytest.raises(Exception) as e_info:
-        result = test_flow()
+    with pytest.raises(Exception):
+        test_flow()
