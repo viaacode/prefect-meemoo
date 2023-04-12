@@ -1,16 +1,8 @@
 import os
+import subprocess
 
-
-def pytest_sessionstart(session):
+def pytest_sessionstart():
     path = os.path.join(os.getcwd(), "tests/etl")
-    output = os.popen(f"cd {path}; yarn install; yarn tsc")
-
-    while True:
-        line = output.readline()
-
-        if line:
-            print(line, end="")
-        else:
-            break
-
-    output.close()
+    subprocess.run(['yarn', 'cache', 'clean'], cwd=path, check = True)
+    subprocess.run(['yarn', 'install'], cwd=path, check = True)
+    subprocess.run(['yarn', 'tsc'], cwd=path, check = True)

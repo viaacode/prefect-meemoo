@@ -2,16 +2,26 @@ import pytest
 from prefect import flow
 from prefect.blocks.core import Block
 from rdflib import Graph
-from rdflib.compare import to_isomorphic
+from rdflib.compare import to_isomorphic, graph_diff
 
 from prefect_meemoo.triply import run_triplyetl
 
 
 def rdf_is_equal(expected, actual):
     g_expected = Graph().parse(data=expected)
-    g_actual = Graph().parse(file=actual)
-    return to_isomorphic(g_expected) == to_isomorphic(g_actual)
+    g_actual = Graph().parse(actual)
 
+    iso_expected = to_isomorphic(g_expected)
+    iso_actual = to_isomorphic(g_actual)
+
+    in_both, in_first, in_second = graph_diff(iso_expected, iso_actual)
+    print(
+        '-'.join(('\n'+in_first.serialize(format="nt").lstrip()).splitlines(True)) +
+        '+'.join(('\n'+in_second.serialize(format="nt").lstrip()).splitlines(True))
+    )
+
+    return  iso_expected == iso_actual
+    
 
 def test_run_triplyetl():
     @flow(name="prefect_flow_triplyetl")
@@ -29,7 +39,7 @@ def test_run_triplyetl():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./etl/static/output.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/dist/output/output.ttl")
 
 
 def test_add_block_as_variables():
@@ -37,7 +47,7 @@ def test_add_block_as_variables():
     def test_flow():
         run_triplyetl(
             etl_script_path="./tests/etl/dist/variables_block.js",
-            triply=Block(test="test"),
+            triply=Block(test="test-block"),
         )
 
     result = test_flow()
@@ -50,7 +60,7 @@ def test_add_block_as_variables():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./etl/static/output-block.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/dist/output/output-block.ttl")
 
 
 def test_run_triplyetl_with_variables():
@@ -70,7 +80,7 @@ def test_run_triplyetl_with_variables():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./etl/static/output-variables.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/dist/output/output-variables.ttl")
 
 
 def test_run_triplyetl_with_error():

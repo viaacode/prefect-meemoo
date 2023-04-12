@@ -142,8 +142,13 @@ node_modules
 *.ttl
 ratt.err
 .npmrc
-.pnp.cjs
-.pnp.loader.mjs
-.yarn/
 .yarnrc.yml
+.pnp.*
+.yarn/*
+.yarn
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 

@@ -14,7 +14,7 @@ export default async function () : Promise<Etl> {
         forEach('data.contentpartners',
             triple(iri(prefixes.id, 'id'), rdfs.label, literal(process.env.TEST || "not found", lang.nl)),
         ),
-        toRdf(Destination.file('./static/output-variables.ttl'))
+        toRdf(Destination.file('./output/output-variables.ttl'))
     )
     return app
 }

@@ -22,11 +22,11 @@ def run_triplyetl(etl_script_path: str, **kwargs):
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
-            for b_key, b_value in Block(value).dict().items():
+            for b_key, b_value in value.dict().items():
                 if isinstance(b_value, SecretStr):
-                    etl_env[f"{key.upper()}_{b_key.upper}"] = b_value.get_secret_value()
+                    etl_env[f"{key.upper()}_{b_key.upper()}"] = b_value.get_secret_value()
                 else:
-                    etl_env[f"{key.upper()}_{b_key.upper}"] = b_value
+                    etl_env[f"{key.upper()}_{b_key.upper()}"] = b_value
         else:
             etl_env[key.upper()] = str(value)
 
