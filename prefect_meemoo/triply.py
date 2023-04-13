@@ -12,10 +12,9 @@ from prefect.states import Failed
 # task_run_name="triplyetl-{name}-on-{date:%A}")
 def run_triplyetl(etl_script_path: str, **kwargs):
     logger = get_run_logger()
-    logger.info("Running TriplyETL script: " + etl_script_path)
     # Resolve absolute path of TriplyETL script
-    etl_script_abspath = Path(etl_script_path).resolve()
-    etl_folder_abspath = os.path.dirname(etl_script_abspath)
+    etl_script_abspath = os.path.abspath(etl_script_path)
+    logger.info("Running TriplyETL script: " + str(etl_script_abspath))
 
     # Create an environment for subprocess
     etl_env = os.environ.copy()
@@ -31,8 +30,8 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
-        ["yarn", "etl", etl_script_abspath],
-        cwd=etl_folder_abspath,
+        ["yarn", "etl", str(etl_script_abspath)],
+        cwd=os.path.dirname(etl_script_abspath),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -60,6 +59,8 @@ def run_triplyetl(etl_script_path: str, **kwargs):
 
         if record_message:
             message += line
+        # elif bool(line and not line.isspace()):
+        #     logger.info(line)
 
         # Stop recording log message when encountering end frame
         if re.search(r"╰─|└─", line):

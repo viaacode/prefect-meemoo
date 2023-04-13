@@ -10,7 +10,7 @@ export default async function () : Promise<Etl> {
 
     app.use(
         triple(iri(prefixes.id, str('Jane')), rdfs.label, str(process.env.TEST)),
-        toRdf(Destination.file('./output/output-variables.ttl'))
+        toRdf(Destination.file('../output/output-variables.ttl'))
     )
     return app
 }

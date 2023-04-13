@@ -8,8 +8,10 @@ export default async function () : Promise<Etl> {
         id: declarePrefix('https://data.hetarchief.be/id/')
     }
 
+    console.log(`Execution dir: ${process.cwd()}`)
+
     app.use(
-        fromJson(Source.file('../static/org-api-qas.json')),
+        fromJson(Source.file('../input/org-api-qas.json')),
         forEach('data.contentpartners',
             triple(iri(prefixes.id, 'id'), a, sdo.Person),
             
@@ -17,7 +19,7 @@ export default async function () : Promise<Etl> {
                 triple(iri(prefixes.id, 'id'), sdo.name, 'label' )
             ),
         ),
-        toRdf(Destination.file('./output/output.ttl')),
+        toRdf(Destination.file('../output/output.ttl')),
     )
     return app
 }

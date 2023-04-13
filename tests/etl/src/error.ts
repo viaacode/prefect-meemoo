@@ -10,11 +10,11 @@ export default async function () : Promise<Etl> {
     }
 
     app.use(
-        fromJson(Source.file('./static/org-api-qas.json')),
+        fromJson(Source.file('../input/org-api-qas.json')),
         forEach('data.contentpartners',
             triple(iri(prefixes.id, 'id'), rdfs.label, literal(process.env.TEST || "not found", lang.nl)),
         ),
-        toRdf(Destination.file('./output/output-variables.ttl'))
+        toRdf(Destination.file('../output/output-variables.ttl'))
     )
     return app
 }
