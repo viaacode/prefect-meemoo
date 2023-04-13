@@ -39,7 +39,7 @@ def test_run_triplyetl():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./tests/etl/dist/output/output.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/output/output.ttl")
 
 
 def test_add_block_as_variables():
@@ -60,7 +60,7 @@ def test_add_block_as_variables():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./tests/etl/dist/output/output-block.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/output/output-block.ttl")
 
 
 def test_run_triplyetl_with_variables():
@@ -80,7 +80,7 @@ def test_run_triplyetl_with_variables():
     """
 
     assert result
-    assert rdf_is_equal(expected, "./tests/etl/dist/output/output-variables.ttl")
+    assert rdf_is_equal(expected, "./tests/etl/output/output-variables.ttl")
 
 
 def test_run_triplyetl_with_error():
