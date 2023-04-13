@@ -127,6 +127,7 @@ class PostgresCredentials(Block):
     username: str = Field(default=(...), description="Postgres username.")
     host: str = Field(default=(...), description="Postgres URL.")
     port: int = Field(default=(...), description="Postgres port.")
+    database: str = Field(default=(...), description="Postgres database.")
 
     _block_schema_capabilities = ["meemoo-prefect", "credentials"]
 
