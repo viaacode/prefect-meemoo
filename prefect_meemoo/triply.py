@@ -60,6 +60,7 @@ def run_triplyetl(etl_script_path: str, **kwargs):
 
         if record_message:
             message += line
+        #elif line.strip():
         else:
             logger.info(line)
 
