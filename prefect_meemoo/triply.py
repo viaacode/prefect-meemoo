@@ -61,7 +61,8 @@ def run_triplyetl(etl_script_path: str, **kwargs):
 
         if record_message:
             message += line
-        elif bool(line and not line.isspace()):
+        #elif bool(line and not line.isspace()):
+        else:
             logger.info(line)
 
         # Stop recording log message when encountering end frame
