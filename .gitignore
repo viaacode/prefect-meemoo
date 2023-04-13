@@ -136,3 +136,19 @@ dmypy.json
 
 # Jupyter notebook
 *.ipynb
+
+# Nodejs
+node_modules
+*.ttl
+ratt.err
+.npmrc
+.yarnrc.yml
+.pnp.*
+.yarn/*
+.yarn
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+

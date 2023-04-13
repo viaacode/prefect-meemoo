@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "lib": ["es6"],
+    "module": "commonjs",
+    "sourceMap": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "removeComments": true,
+    "listFiles": false,
+    "outDir": "./dist",
+    "moduleResolution": "node16",
+    "rootDir": "./src",
+  },
+  "compileOnSave": true,
+  //Include the eslintrc file, as eslint uses the typescript parser, and it'll fail when it tries to lint itself
+  "include": ["src/**/*.ts", ".eslintrc.js"]
+}

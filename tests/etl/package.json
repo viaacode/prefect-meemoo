@@ -1,0 +1,25 @@
+{
+  "scripts": {
+    "build": "./node_modules/.bin/tsc"
+  },
+  "dependencies": {
+    "@triplyetl/etl": "latest"
+  },
+  "packageManager": "yarn@3.5.0",
+  "devDependencies": {
+    "@types/chai": "^4.2.21",
+    "@types/fs-extra": "^9.0.12",
+    "@types/lodash": "^4.14.173",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "16",
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
+    "eslint": "^8.17.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jest": "^26.5.3",
+    "husky": "8.0.1",
+    "lint-staged": "^13.0.1",
+    "prettier": "^2.4.1",
+    "typescript": "^4.7.4"
+  }
+}
