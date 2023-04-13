@@ -14,9 +14,9 @@ def run_triplyetl(etl_script_path: str, **kwargs):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = Path(etl_script_path).resolve()
-    logger.info("Running TriplyETL script: " + etl_script_abspath)
+    logger.info("Running TriplyETL script: " + str(etl_script_abspath))
     etl_folder_abspath = os.path.dirname(etl_script_abspath)
-    logger.info("Found TriplyETL folder: " + etl_folder_abspath)
+    logger.info("Found TriplyETL folder: " + str(etl_folder_abspath))
 
     # Create an environment for subprocess
     etl_env = os.environ.copy()
@@ -32,7 +32,7 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
-        ["yarn", "etl", etl_script_abspath],
+        ["yarn", "etl", str(etl_script_abspath)],
         cwd=etl_folder_abspath,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
