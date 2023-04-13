@@ -8,6 +8,8 @@ export default async function () : Promise<Etl> {
         id: declarePrefix('https://data.hetarchief.be/id/')
     }
 
+    console.log(`Execution dir: ${process.cwd()}`)
+
     app.use(
         fromJson(Source.file('../static/org-api-qas.json')),
         forEach('data.contentpartners',
