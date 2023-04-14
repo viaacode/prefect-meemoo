@@ -2,9 +2,9 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from prefect.blocks.core import Block, SecretStr
 
 from prefect import get_run_logger, task
+from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
 
@@ -22,6 +22,8 @@ def run_triplyetl(etl_script_path: str, **kwargs):
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
             for b_key, b_value in value.dict().items():
+                if b_key.startswith("_"):
+                    continue
                 if isinstance(b_value, SecretStr):
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = b_value.get_secret_value()
                 else:
