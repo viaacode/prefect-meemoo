@@ -1,6 +1,8 @@
 import os
 import re
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 from prefect import get_run_logger, task
@@ -9,7 +11,6 @@ from prefect.states import Failed
 
 
 @task(name="Run TriplyETL", description="Runs an TriplyETL script.")
-# task_run_name="triplyetl-{name}-on-{date:%A}")
 def run_triplyetl(etl_script_path: str, **kwargs):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
@@ -32,7 +33,7 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
-        ["yarn", "etl", str(etl_script_abspath)],
+        ["yarn", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -41,16 +42,18 @@ def run_triplyetl(etl_script_path: str, **kwargs):
         encoding="utf-8",
     )
 
-    p.wait()
-
     # Parse CLI output from TriplyETL for logging
-    record_message = False
-    error = False
-    message = ""
-    while True:
-        line = p.stdout.readline()
 
-        # Start recording log message when encountering start frame
+    record_message = False
+    message = ""
+    prev_statements = ""
+    error = False
+    last_statement_time = time.time() - 10
+
+    for line in iter(lambda: p.stdout.readline(), ""):
+        # # Start recording log message when encountering start frame
+        if not line:
+            break
         if re.search(r"╭─|┌─", line):
             record_message = True
 
@@ -71,26 +74,36 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             else:
                 logger.info(message)
             record_message = False
-            error = True
             message = ""
+            error = False
 
-        if "ERROR" in line:
-            errorline = line
-            while not "etl.err" in line and line:
-                line = p.stdout.readline()
-                errorline += line
-            logger.error(errorline)
+        if re.search(r"etl.err", line):
+            logger.error(message)
+            record_message = False
+            message = ""
+            error = False
+            
+        if re.search(r"#Statements:", line):
+            if line != prev_statements and time.time() - last_statement_time > 10:          
+                logger.info(line)
+                prev_statements = line
+                last_statement_time = time.time()
 
-        if not line:
-            break
-
-    # Split and log stderr in warning and error
-    for err in p.stderr.readlines():
+    for err in iter(lambda: p.stderr.readline(), ""):
         if re.match(r"warning", err):
             logger.warning(err)
         else:
             logger.error(err)
 
+    p.wait()
+
+    # Split and log stderr in warning and error
+    # for err in p.stderr.readline():
+    #     if re.match(r"warning", err):
+    #         logger.warning(err)
+    #     else:
+    #         logger.error(err)
+    # logger.info("DONE2")
     if p.returncode > 0:
         return Failed()
 
