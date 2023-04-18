@@ -66,7 +66,7 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             error = True
 
         if record_message:
-            message += line.strip()
+            message += line
 
         # Stop recording log message when encountering end frame
         if re.search(r"╰─|└─", line):
