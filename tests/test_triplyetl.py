@@ -16,12 +16,12 @@ def rdf_is_equal(expected, actual):
 
     in_both, in_first, in_second = graph_diff(iso_expected, iso_actual)
     print(
-        '-'.join(('\n'+in_first.serialize(format="nt").lstrip()).splitlines(True)) +
-        '+'.join(('\n'+in_second.serialize(format="nt").lstrip()).splitlines(True))
+        "-".join(("\n" + in_first.serialize(format="nt").lstrip()).splitlines(True))
+        + "+".join(("\n" + in_second.serialize(format="nt").lstrip()).splitlines(True))
     )
 
-    return  iso_expected == iso_actual
-    
+    return iso_expected == iso_actual
+
 
 def test_run_triplyetl():
     @flow(name="prefect_flow_triplyetl")
@@ -87,6 +87,23 @@ def test_run_triplyetl_with_error():
     @flow(name="prefect_flow_triplyetl_error")
     def test_flow():
         run_triplyetl(etl_script_path="./tests/etl/dist/error.js")
+
+    with pytest.raises(Exception):
+        test_flow()
+
+
+def test_run_triplyetl_with_validate():
+    @flow(name="prefect_flow_triplyetl_validate")
+    def test_flow():
+        run_triplyetl(etl_script_path="./tests/etl/dist/validation.js")
+
+    assert test_flow()
+
+
+def test_run_triplyetl_with_validate_violation():
+    @flow(name="prefect_flow_triplyetl_validate_violation")
+    def test_flow():
+        run_triplyetl(etl_script_path="./tests/etl/dist/validation_violation.js")
 
     with pytest.raises(Exception):
         test_flow()

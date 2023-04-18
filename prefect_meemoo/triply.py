@@ -1,6 +1,8 @@
 import os
 import re
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 from prefect import get_run_logger, task
@@ -9,7 +11,6 @@ from prefect.states import Failed
 
 
 @task(name="Run TriplyETL", description="Runs an TriplyETL script.")
-# task_run_name="triplyetl-{name}-on-{date:%A}")
 def run_triplyetl(etl_script_path: str, **kwargs):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
@@ -25,44 +26,47 @@ def run_triplyetl(etl_script_path: str, **kwargs):
                 if b_key.startswith("_"):
                     continue
                 if isinstance(b_value, SecretStr):
-                    etl_env[f"{key.upper()}_{b_key.upper()}"] = b_value.get_secret_value()
+                    etl_env[
+                        f"{key.upper()}_{b_key.upper()}"
+                    ] = b_value.get_secret_value()
                 else:
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
         else:
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
-        ["yarn", "etl", str(etl_script_abspath)],
+        ["yarn", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         universal_newlines=True,
         env=etl_env,
         encoding="utf-8",
     )
 
-    p.wait()
+    record_message = False
+    message = ""
+    prev_statements = ""
+    error = False
+    last_statement_time = time.time() - 10
 
     # Parse CLI output from TriplyETL for logging
-    record_message = False
-    error = False
-    message = ""
     while True:
         line = p.stdout.readline()
+        # Break loop when subprocess has ended
+        if line == "" and p.poll() is not None:
+            break
 
         # Start recording log message when encountering start frame
-        if re.search(r"╭─|┌─", line):
+        if re.search(r"╭─|┌─|ERROR", line):
             record_message = True
 
-        # Start recording error message when encountering ERROR
+        # Set message to error when encountering ERROR
         if re.search(r"ERROR", line):
-            record_message = True
             error = True
 
         if record_message:
             message += line
-        # elif bool(line and not line.isspace()):
-        #     logger.info(line)
 
         # Stop recording log message when encountering end frame
         if re.search(r"╰─|└─", line):
@@ -71,27 +75,34 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             else:
                 logger.info(message)
             record_message = False
-            error = True
             message = ""
+            error = False
 
-        if "ERROR" in line:
-            errorline = line
-            while not "etl.err" in line and line:
-                line = p.stdout.readline()
-                errorline += line
-            logger.error(errorline)
+        if re.search(r"etl.err", line):
+            logger.error(message)
+            record_message = False
+            message = ""
+            error = False
 
-        if not line:
-            break
+        if re.search(r"#Statements:", line):
+            if line != prev_statements and time.time() - last_statement_time > 10:
+                logger.info(line)
+                prev_statements = line
+                last_statement_time = time.time()
 
-    # Split and log stderr in warning and error
-    for err in p.stderr.readlines():
-        if re.match(r"warning", err):
-            logger.warning(err)
-        else:
-            logger.error(err)
+        # The line did not trigger a message, log seperately
+        if not record_message and line:
+            if re.match(r"warning", line):
+                logger.warning(line)
+            elif re.match(r"error", line):
+                logger.error(line)
+            else:
+                logger.info(line.strip())
 
-    if p.returncode > 0:
+    # Read final returncode
+    rc = p.poll()
+
+    if rc > 0:
         return Failed()
 
-    return p.returncode > 0
+    return rc > 0

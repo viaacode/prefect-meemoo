@@ -140,7 +140,7 @@ dmypy.json
 # Nodejs
 node_modules
 *.ttl
-ratt.err
+*.err
 .npmrc
 .yarnrc.yml
 .pnp.*
