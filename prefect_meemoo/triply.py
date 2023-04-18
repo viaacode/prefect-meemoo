@@ -26,7 +26,9 @@ def run_triplyetl(etl_script_path: str, **kwargs):
                 if b_key.startswith("_"):
                     continue
                 if isinstance(b_value, SecretStr):
-                    etl_env[f"{key.upper()}_{b_key.upper()}"] = b_value.get_secret_value()
+                    etl_env[
+                        f"{key.upper()}_{b_key.upper()}"
+                    ] = b_value.get_secret_value()
                 else:
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
         else:
@@ -36,13 +38,11 @@ def run_triplyetl(etl_script_path: str, **kwargs):
         ["yarn", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         universal_newlines=True,
         env=etl_env,
         encoding="utf-8",
     )
-
-    # Parse CLI output from TriplyETL for logging
 
     record_message = False
     message = ""
@@ -50,22 +50,23 @@ def run_triplyetl(etl_script_path: str, **kwargs):
     error = False
     last_statement_time = time.time() - 10
 
-    for line in iter(lambda: p.stdout.readline(), ""):
-        # # Start recording log message when encountering start frame
-        if not line:
+    # Parse CLI output from TriplyETL for logging
+    while True:
+        line = p.stdout.readline()
+        # Break loop when subprocess has ended
+        if line == "" and p.poll() is not None:
             break
-        if re.search(r"╭─|┌─", line):
+
+        # Start recording log message when encountering start frame
+        if re.search(r"╭─|┌─|ERROR", line):
             record_message = True
 
-        # Start recording error message when encountering ERROR
+        # Set message to error when encountering ERROR
         if re.search(r"ERROR", line):
-            record_message = True
             error = True
 
         if record_message:
-            message += line
-        # elif bool(line and not line.isspace()):
-        #     logger.info(line)
+            message += line.strip()
 
         # Stop recording log message when encountering end frame
         if re.search(r"╰─|└─", line):
@@ -82,29 +83,26 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             record_message = False
             message = ""
             error = False
-            
+
         if re.search(r"#Statements:", line):
-            if line != prev_statements and time.time() - last_statement_time > 10:          
+            if line != prev_statements and time.time() - last_statement_time > 10:
                 logger.info(line)
                 prev_statements = line
                 last_statement_time = time.time()
 
-    for err in iter(lambda: p.stderr.readline(), ""):
-        if re.match(r"warning", err):
-            logger.warning(err)
-        else:
-            logger.error(err)
+        # The line did not trigger a message, log seperately
+        if not record_message and line:
+            if re.match(r"warning", line):
+                logger.warning(line)
+            elif re.match(r"error", line):
+                logger.warning(line)
+            else:
+                logger.info(line.strip())
 
-    p.wait()
+    # Read final returncode
+    rc = p.poll()
 
-    # Split and log stderr in warning and error
-    # for err in p.stderr.readline():
-    #     if re.match(r"warning", err):
-    #         logger.warning(err)
-    #     else:
-    #         logger.error(err)
-    # logger.info("DONE2")
-    if p.returncode > 0:
+    if rc > 0:
         return Failed()
 
-    return p.returncode > 0
+    return rc > 0
