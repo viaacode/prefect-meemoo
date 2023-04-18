@@ -95,7 +95,7 @@ def run_triplyetl(etl_script_path: str, **kwargs):
             if re.match(r"warning", line):
                 logger.warning(line)
             elif re.match(r"error", line):
-                logger.warning(line)
+                logger.error(line)
             else:
                 logger.info(line.strip())
 
