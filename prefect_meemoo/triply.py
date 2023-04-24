@@ -10,8 +10,8 @@ from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
 
-@task(name="Run TriplyETL", description="Runs an TriplyETL script.")
-def run_triplyetl(etl_script_path: str, **kwargs):
+@task(name="Run TriplyETL", description="Runs an TriplyETL script.", task_run_name="{task_run_name}")
+def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **kwargs):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = os.path.abspath(etl_script_path)
