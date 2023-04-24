@@ -3,7 +3,7 @@
     "build": "./node_modules/.bin/tsc"
   },
   "dependencies": {
-    "@triplyetl/etl": "latest"
+    "@triplyetl/etl": "1.0.1-rc.5"
   },
   "packageManager": "yarn@3.5.0",
   "devDependencies": {
