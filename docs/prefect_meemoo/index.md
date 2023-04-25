@@ -12,7 +12,7 @@ Prefect Meemoo
 
 - [Blocks](./blocks.md)
 - [Credentials](./credentials.md)
-- [Prefect Mediahaven](./prefect_mediahaven.md)
-- [Rdf](./rdf.md)
-- [Rdf Parse](./rdf_parse.md)
-- [Triply](./triply.md)
+- [Elasticsearch](elasticsearch/index.md)
+- [Mediahaven](mediahaven/index.md)
+- [Rdf](rdf/index.md)
+- [Triplydb](triplydb/index.md)

@@ -4,7 +4,7 @@ from prefect.blocks.core import Block
 from rdflib import Graph
 from rdflib.compare import to_isomorphic, graph_diff
 
-from prefect_meemoo.triply import run_triplyetl
+from prefect_meemoo.triplydb.tasks import run_triplyetl
 
 
 def rdf_is_equal(expected, actual):

@@ -11,7 +11,7 @@ Blocks
 
 ## LastRunConfig
 
-[Show source in blocks.py:8](../../prefect_meemoo/blocks.py#L8)
+[Show source in blocks.py:7](../../prefect_meemoo/blocks.py#L7)
 
 Block used to manage the configuration of when a flow last ran (the day).
 
