@@ -6,7 +6,6 @@ A full list of `Prefect-meemoo` project modules.
 
 - [Prefect Meemoo](prefect_meemoo/index.md#prefect-meemoo)
     - [Blocks](prefect_meemoo/blocks.md#blocks)
-    - [Credentials](prefect_meemoo/credentials.md#credentials)
     - [Elasticsearch](prefect_meemoo/elasticsearch/index.md#elasticsearch)
         - [Credentials](prefect_meemoo/elasticsearch/credentials.md#credentials)
     - [Mediahaven](prefect_meemoo/mediahaven/index.md#mediahaven)

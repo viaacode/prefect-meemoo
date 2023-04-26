@@ -11,7 +11,6 @@ Prefect Meemoo
 ## Modules
 
 - [Blocks](./blocks.md)
-- [Credentials](./credentials.md)
 - [Elasticsearch](elasticsearch/index.md)
 - [Mediahaven](mediahaven/index.md)
 - [Rdf](rdf/index.md)
