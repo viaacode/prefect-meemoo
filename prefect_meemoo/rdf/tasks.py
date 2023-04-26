@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 import pandas as pd
 import requests
 from prefect import get_run_logger, task
-from prefect_meemoo.rdf_parse import parse_dict, parse_json
+from prefect_meemoo.rdf.rdf_parse import parse_dict, parse_json
 from pyshacl import validate
 from rdflib import ConjunctiveGraph, Graph, Namespace, URIRef
 from rdflib.compare import graph_diff, to_isomorphic

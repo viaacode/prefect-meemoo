@@ -1,13 +1,13 @@
-# Rdf
+# Tasks
 
 [Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
 [Prefect Meemoo](../index.md#prefect-meemoo) /
 [Rdf](./index.md#rdf) /
-Rdf
+Tasks
 
-> Auto-generated documentation for [prefect_meemoo.rdf.rdf](../../../prefect_meemoo/rdf/rdf.py) module.
+> Auto-generated documentation for [prefect_meemoo.rdf.tasks](../../../prefect_meemoo/rdf/tasks.py) module.
 
-- [Rdf](#rdf)
+- [Tasks](#tasks)
   - [combine_ntriples](#combine_ntriples)
   - [compare](#compare)
   - [create_sparqlwrapper](#create_sparqlwrapper)
@@ -29,7 +29,7 @@ Rdf
 
 ## combine_ntriples
 
-[Show source in rdf.py:424](../../../prefect_meemoo/rdf/rdf.py#L424)
+[Show source in tasks.py:423](../../../prefect_meemoo/rdf/tasks.py#L423)
 
 Concatenates a couple of ntriples lines
 
@@ -49,7 +49,7 @@ def combine_ntriples(*ntriples: str):
 
 ## compare
 
-[Show source in rdf.py:302](../../../prefect_meemoo/rdf/rdf.py#L302)
+[Show source in tasks.py:301](../../../prefect_meemoo/rdf/tasks.py#L301)
 
 #### Signature
 
@@ -63,7 +63,7 @@ def compare(input_data1: str, input_data2: str):
 
 ## create_sparqlwrapper
 
-[Show source in rdf.py:466](../../../prefect_meemoo/rdf/rdf.py#L466)
+[Show source in tasks.py:465](../../../prefect_meemoo/rdf/tasks.py#L465)
 
 #### Signature
 
@@ -76,7 +76,7 @@ def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = Non
 
 ## dict_to_rdf
 
-[Show source in rdf.py:344](../../../prefect_meemoo/rdf/rdf.py#L344)
+[Show source in tasks.py:343](../../../prefect_meemoo/rdf/tasks.py#L343)
 
 Converts Python dict objects to RDF by direct mapping
 
@@ -105,7 +105,7 @@ def dict_to_rdf(ns: str = SRC_NS, *input_data: dict):
 
 ## json_to_rdf
 
-[Show source in rdf.py:322](../../../prefect_meemoo/rdf/rdf.py#L322)
+[Show source in tasks.py:321](../../../prefect_meemoo/rdf/tasks.py#L321)
 
 Converts JSON documents to RDF by direct mapping
 
@@ -134,7 +134,7 @@ def json_to_rdf(ns: str = SRC_NS, *input_data: str):
 
 ## resolve_text
 
-[Show source in rdf.py:484](../../../prefect_meemoo/rdf/rdf.py#L484)
+[Show source in tasks.py:483](../../../prefect_meemoo/rdf/tasks.py#L483)
 
 #### Signature
 
@@ -147,7 +147,7 @@ def resolve_text(value):
 
 ## sparql_gsp_delete
 
-[Show source in rdf.py:102](../../../prefect_meemoo/rdf/rdf.py#L102)
+[Show source in tasks.py:101](../../../prefect_meemoo/rdf/tasks.py#L101)
 
 Send a DELETE request to a SPARQL Graph Store HTTP Protocol endpoint
 
@@ -181,7 +181,7 @@ def sparql_gsp_delete(
 
 ## sparql_gsp_get
 
-[Show source in rdf.py:131](../../../prefect_meemoo/rdf/rdf.py#L131)
+[Show source in tasks.py:130](../../../prefect_meemoo/rdf/tasks.py#L130)
 
 Send a GET request to a SPARQL Graph Store HTTP Protocol endpoint
 
@@ -220,7 +220,7 @@ def sparql_gsp_get(
 
 ## sparql_gsp_post
 
-[Show source in rdf.py:26](../../../prefect_meemoo/rdf/rdf.py#L26)
+[Show source in tasks.py:25](../../../prefect_meemoo/rdf/tasks.py#L25)
 
 Send a POST request to a SPARQL Graph Store HTTP Protocol endpoint
 
@@ -261,7 +261,7 @@ def sparql_gsp_post(
 
 ## sparql_gsp_put
 
-[Show source in rdf.py:64](../../../prefect_meemoo/rdf/rdf.py#L64)
+[Show source in tasks.py:63](../../../prefect_meemoo/rdf/tasks.py#L63)
 
 Send a PUT request to a SPARQL Graph Store HTTP Protocol endpoint
 
@@ -302,7 +302,7 @@ def sparql_gsp_put(
 
 ## sparql_select
 
-[Show source in rdf.py:165](../../../prefect_meemoo/rdf/rdf.py#L165)
+[Show source in tasks.py:164](../../../prefect_meemoo/rdf/tasks.py#L164)
 
 Execute SPARQL SELECT query on a SPARQL endpoint and get the results in a pandas dataframe.
 
@@ -336,7 +336,7 @@ def sparql_select(
 
 ## sparql_transform
 
-[Show source in rdf.py:366](../../../prefect_meemoo/rdf/rdf.py#L366)
+[Show source in tasks.py:365](../../../prefect_meemoo/rdf/tasks.py#L365)
 
 Transforms one RDF graph in another using a CONSTRUCT query
 
@@ -361,7 +361,7 @@ def sparql_transform(input_data: str, query: str):
 
 ## sparql_transform_insert
 
-[Show source in rdf.py:396](../../../prefect_meemoo/rdf/rdf.py#L396)
+[Show source in tasks.py:395](../../../prefect_meemoo/rdf/tasks.py#L395)
 
 Transforms one RDF graph in another using an INSERT query
 
@@ -386,7 +386,7 @@ def sparql_transform_insert(input_data: str, query: str, target_graph: str):
 
 ## sparql_update_clear
 
-[Show source in rdf.py:284](../../../prefect_meemoo/rdf/rdf.py#L284)
+[Show source in tasks.py:283](../../../prefect_meemoo/rdf/tasks.py#L283)
 
 Clear a graph using SPARQL Update.
 
@@ -412,7 +412,7 @@ def sparql_update_clear(graph, endpoint, silent=True):
 
 ## sparql_update_insert
 
-[Show source in rdf.py:254](../../../prefect_meemoo/rdf/rdf.py#L254)
+[Show source in tasks.py:253](../../../prefect_meemoo/rdf/tasks.py#L253)
 
 Insert an iterable of RDFLib triples using SPARQL Update.
 
@@ -438,7 +438,7 @@ def sparql_update_insert(triples, endpoint, graph=None):
 
 ## sparql_update_query
 
-[Show source in rdf.py:213](../../../prefect_meemoo/rdf/rdf.py#L213)
+[Show source in tasks.py:212](../../../prefect_meemoo/rdf/tasks.py#L212)
 
 Execute SPARQL Update on a SPARQL endpoint.
 
@@ -472,7 +472,7 @@ def sparql_update_query(
 
 ## to_ntriples
 
-[Show source in rdf.py:458](../../../prefect_meemoo/rdf/rdf.py#L458)
+[Show source in tasks.py:457](../../../prefect_meemoo/rdf/tasks.py#L457)
 
 #### Signature
 
@@ -485,7 +485,7 @@ def to_ntriples(t, namespace_manager=None):
 
 ## validate_ntriples
 
-[Show source in rdf.py:436](../../../prefect_meemoo/rdf/rdf.py#L436)
+[Show source in tasks.py:435](../../../prefect_meemoo/rdf/tasks.py#L435)
 
 #### Signature
 
