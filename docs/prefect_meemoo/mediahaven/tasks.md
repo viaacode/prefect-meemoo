@@ -1,12 +1,13 @@
-# Prefect Mediahaven
+# Tasks
 
-[Prefect-meemoo Index](../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](./index.md#prefect-meemoo) /
-Prefect Mediahaven
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
+[Prefect Meemoo](../index.md#prefect-meemoo) /
+[Mediahaven](./index.md#mediahaven) /
+Tasks
 
-> Auto-generated documentation for [prefect_meemoo.prefect_mediahaven](../../prefect_meemoo/prefect_mediahaven.py) module.
+> Auto-generated documentation for [prefect_meemoo.mediahaven.tasks](../../../prefect_meemoo/mediahaven/tasks.py) module.
 
-- [Prefect Mediahaven](#prefect-mediahaven)
+- [Tasks](#tasks)
   - [fragment_metadata_update](#fragment_metadata_update)
   - [generate_record_json](#generate_record_json)
   - [get_field_definition](#get_field_definition)
@@ -18,7 +19,7 @@ Prefect Mediahaven
 
 ## fragment_metadata_update
 
-[Show source in prefect_mediahaven.py:254](../../prefect_meemoo/prefect_mediahaven.py#L254)
+[Show source in tasks.py:254](../../../prefect_meemoo/mediahaven/tasks.py#L254)
 
 Generate JSON for updating metadata of a fragment and update in MediaHaven.
 
@@ -45,7 +46,7 @@ def fragment_metadata_update(client: MediaHaven, fragment_id: str, fields: dict)
 
 ## generate_record_json
 
-[Show source in prefect_mediahaven.py:166](../../prefect_meemoo/prefect_mediahaven.py#L166)
+[Show source in tasks.py:166](../../../prefect_meemoo/mediahaven/tasks.py#L166)
 
 Generate a json object that can be used to update metadata in MediaHaven
 
@@ -75,7 +76,7 @@ def generate_record_json(
 
 ## get_field_definition
 
-[Show source in prefect_mediahaven.py:78](../../prefect_meemoo/prefect_mediahaven.py#L78)
+[Show source in tasks.py:78](../../../prefect_meemoo/mediahaven/tasks.py#L78)
 
 Get the field definition from MediaHaven
 
@@ -103,7 +104,7 @@ def get_field_definition(client: MediaHaven, field_flat_key: str) -> dict:
 
 ## get_organisation
 
-[Show source in prefect_mediahaven.py:22](../../prefect_meemoo/prefect_mediahaven.py#L22)
+[Show source in tasks.py:22](../../../prefect_meemoo/mediahaven/tasks.py#L22)
 
 Get an organisation from MediaHaven
 
@@ -134,7 +135,7 @@ def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
 
 ## search_organisations
 
-[Show source in prefect_mediahaven.py:49](../../prefect_meemoo/prefect_mediahaven.py#L49)
+[Show source in tasks.py:49](../../../prefect_meemoo/mediahaven/tasks.py#L49)
 
 Get a list of organisations from MediaHaven
 
@@ -164,7 +165,7 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
 
 ## search_records
 
-[Show source in prefect_mediahaven.py:130](../../prefect_meemoo/prefect_mediahaven.py#L130)
+[Show source in tasks.py:130](../../../prefect_meemoo/mediahaven/tasks.py#L130)
 
 Task to query MediaHaven with a given query.
 
@@ -203,7 +204,7 @@ def search_records(
 
 ## update_record
 
-[Show source in prefect_mediahaven.py:105](../../prefect_meemoo/prefect_mediahaven.py#L105)
+[Show source in tasks.py:105](../../../prefect_meemoo/mediahaven/tasks.py#L105)
 
 Update metadata of a fragment.
 
@@ -230,7 +231,7 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
 
 ## update_single_value_flow
 
-[Show source in prefect_mediahaven.py:283](../../prefect_meemoo/prefect_mediahaven.py#L283)
+[Show source in tasks.py:283](../../../prefect_meemoo/mediahaven/tasks.py#L283)
 
 Flow to update metadata in MediaHaven.
 

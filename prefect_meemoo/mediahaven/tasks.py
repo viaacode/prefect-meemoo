@@ -9,7 +9,7 @@ from mergedeep import merge
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import JSON
 from prefect.filesystems import LocalFileSystem
-from prefect_meemoo.credentials import MediahavenCredentials
+from prefect_meemoo.mediahaven.credentials import MediahavenCredentials
 
 '''
 --- Tasks ---

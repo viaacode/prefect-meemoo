@@ -11,7 +11,7 @@ from prefect.states import Failed
 
 
 @task(name="Run TriplyETL", description="Runs an TriplyETL script.", task_run_name="{task_run_name}")
-def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **kwargs):
+def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", debug=False, **kwargs):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = os.path.abspath(etl_script_path)
@@ -53,6 +53,9 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **
     # Parse CLI output from TriplyETL for logging
     while True:
         line = p.stdout.readline()
+        # Remove ANSI escape sequences
+        line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
+        
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
             break
@@ -64,7 +67,7 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **
         # Set message to error when encountering ERROR
         if re.search(r"ERROR", line):
             error = True
-
+        
         if record_message:
             message += line
 
@@ -84,6 +87,9 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **
             message = ""
             error = False
 
+        if re.search(r"Info", line) and not (re.search(r"Error", line) or re.search(r"Warning", line)) :
+            logger.info(line)
+            
         if re.search(r"#Statements:", line):
             if line != prev_statements and time.time() - last_statement_time > 10:
                 logger.info(line)
@@ -96,7 +102,7 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **
                 logger.warning(line)
             elif re.match(r"error", line):
                 logger.error(line)
-            else:
+            elif debug:
                 logger.info(line.strip())
 
     # Read final returncode

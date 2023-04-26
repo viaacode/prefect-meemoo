@@ -1,10 +1,11 @@
 # Rdf Parse
 
-[Prefect-meemoo Index](../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](./index.md#prefect-meemoo) /
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
+[Prefect Meemoo](../index.md#prefect-meemoo) /
+[Rdf](./index.md#rdf) /
 Rdf Parse
 
-> Auto-generated documentation for [prefect_meemoo.rdf_parse](../../prefect_meemoo/rdf_parse.py) module.
+> Auto-generated documentation for [prefect_meemoo.rdf.rdf_parse](../../../prefect_meemoo/rdf/rdf_parse.py) module.
 
 - [Rdf Parse](#rdf-parse)
   - [parse_dict](#parse_dict)
@@ -12,7 +13,7 @@ Rdf Parse
 
 ## parse_dict
 
-[Show source in rdf_parse.py:7](../../prefect_meemoo/rdf_parse.py#L7)
+[Show source in rdf_parse.py:7](../../../prefect_meemoo/rdf/rdf_parse.py#L7)
 
 Generates RDFlib triples from a python dictionary using a direct mapping.
 
@@ -27,7 +28,7 @@ def parse_dict(data, **kwargs):
 
 ## parse_json
 
-[Show source in rdf_parse.py:39](../../prefect_meemoo/rdf_parse.py#L39)
+[Show source in rdf_parse.py:39](../../../prefect_meemoo/rdf/rdf_parse.py#L39)
 
 Generates RDFlib triples from a file-like object
 or a string using a direct mapping.

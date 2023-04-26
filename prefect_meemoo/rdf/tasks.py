@@ -5,14 +5,13 @@ from typing import Any, Dict, Optional
 import pandas as pd
 import requests
 from prefect import get_run_logger, task
+from prefect_meemoo.rdf.rdf_parse import parse_dict, parse_json
 from pyshacl import validate
 from rdflib import ConjunctiveGraph, Graph, Namespace, URIRef
 from rdflib.compare import graph_diff, to_isomorphic
 from requests.auth import AuthBase, HTTPBasicAuth, HTTPDigestAuth
 from SPARQLWrapper import CSV, DIGEST, GET, POST, POSTDIRECTLY, SPARQLWrapper
 from SPARQLWrapper.Wrapper import BASIC
-
-from prefect_meemoo.rdf_parse import parse_dict, parse_json
 
 METHODS = {"GET": GET, "POST": POST}
 SRC_NS = "https://data.hetarchief.be/ns/source#"
