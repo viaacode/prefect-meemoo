@@ -28,7 +28,6 @@ class TriplyDBCredentials(Block):
     owner: str = Field(
         default=(...), description="The user or organization that owns the dataset."
     )
-    dataset: str = Field(default=(...), description="Name of the default dataset.")
     graph: str = Field(
         default=(...), description="Name of the default Named Graph in the dataset."
     )
