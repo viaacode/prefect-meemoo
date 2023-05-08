@@ -25,12 +25,7 @@ class TriplyDBCredentials(Block):
     _logo_url = "https://triplydb.com/imgs/logos/logo-lg.svg"
 
     token: SecretStr = Field(default="", description="The JWT token of the user.")
-    owner: str = Field(
-        default=(...), description="The user or organization that owns the dataset."
-    )
-    graph: str = Field(
-        default=(...), description="Name of the default Named Graph in the dataset."
-    )
+
     host: str = Field(default=(...), description="TriplyDB HTTP host address.")
     gitlab_token: SecretStr = Field(default="", description="Gitlab token.")
     _block_schema_capabilities = ["meemoo-prefect", "credentials"]
