@@ -35,7 +35,7 @@ def run_triplyetl(
                     ] = b_value.get_secret_value()
                 else:
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
-        else:
+        elif value is not None:
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
