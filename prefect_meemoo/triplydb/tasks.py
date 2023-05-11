@@ -1,17 +1,21 @@
 import os
 import re
 import subprocess
-import sys
 import time
-from pathlib import Path
 
 from prefect import get_run_logger, task
 from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
 
-@task(name="Run TriplyETL", description="Runs an TriplyETL script.", task_run_name="{task_run_name}")
-def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", debug=False, **kwargs):
+@task(
+    name="Run TriplyETL",
+    description="Runs an TriplyETL script.",
+    task_run_name="{task_run_name}",
+)
+def run_triplyetl(
+    etl_script_path: str, task_run_name: str = "Run TriplyETL", debug=False, **kwargs
+):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = os.path.abspath(etl_script_path)
@@ -23,7 +27,7 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", de
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
             for b_key, b_value in value.dict().items():
-                if b_key.startswith("_"):
+                if b_key.startswith("_") or b_value is None:
                     continue
                 if isinstance(b_value, SecretStr):
                     etl_env[
@@ -55,7 +59,7 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", de
         line = p.stdout.readline()
         # Remove ANSI escape sequences
         line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
-        
+
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
             break
@@ -67,7 +71,7 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", de
         # Set message to error when encountering ERROR
         if re.search(r"ERROR", line):
             error = True
-        
+
         if record_message:
             message += line
 
@@ -87,9 +91,11 @@ def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", de
             message = ""
             error = False
 
-        if re.search(r"Info", line) and not (re.search(r"Error", line) or re.search(r"Warning", line)) :
+        if re.search(r"Info", line) and not (
+            re.search(r"Error", line) or re.search(r"Warning", line)
+        ):
             logger.info(line)
-            
+
         if re.search(r"#Statements:", line):
             if line != prev_statements and time.time() - last_statement_time > 10:
                 logger.info(line)
