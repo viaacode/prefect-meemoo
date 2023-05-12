@@ -87,7 +87,7 @@ pipeline {
                 }
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        sh("twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD}")
+                        sh("twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
                     }
                 }
             }
