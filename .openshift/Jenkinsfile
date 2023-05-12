@@ -84,7 +84,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${GIT_TAG} && twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
+                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${GIT_TAG}", "requirements.txt" , "twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
                     }
                 }
 
@@ -162,7 +162,7 @@ void getPrefectApiAndVersion(String deploy_env) {
     response = sh(returnStdout: true, script:"curl $PREFECT_API/admin/version").trim().split('"')
     env.PREFECT_VERSION = response[1]
 }
-void runInPrefectContainer(String commands, String requirements_file = 'requirements.txt') {
+void runInPrefectContainer(String commands, String requirements_file = 'requirements.txt', post_commands = '') {
     println("$PREFECT_VERSION-python3.9")
     println("$commands")
     docker.image("${BASE_IMG_NAME}:$PREFECT_VERSION-python3.9").inside("-e PREFECT_API_URL=$PREFECT_API") {
@@ -170,6 +170,7 @@ void runInPrefectContainer(String commands, String requirements_file = 'requirem
         pip3 install -r $requirements_file --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
         unset HTTPS_PROXY HTTP_PROXY http_proxy https_proxy
         $commands
+        $post_commands
         """
     }
 }
