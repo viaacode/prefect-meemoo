@@ -84,7 +84,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${GIT_TAG}", "requirements.txt" , "twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
+                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${GIT_TAG}", "requirements-deploy.txt" , "twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
                     }
                 }
 
