@@ -83,13 +83,11 @@ pipeline {
             }
             steps {
                 script {
-                    sh("python setup.py sdist bdist_wheel --new-version ${GIT_TAG}")
-                }
-                script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        sh("twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
+                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${GIT_TAG}; twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
                     }
                 }
+
             }
         }
         stage('Register prefect block types') {
