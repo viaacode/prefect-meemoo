@@ -1,4 +1,13 @@
+import sys
+
 from setuptools import find_packages, setup
+
+version = None
+if "--new-version" in sys.argv:
+    version_index = sys.argv.index("--new-version")
+    version = sys.argv[version_index + 1]
+    del sys.argv[version_index : version_index + 2]
+
 
 with open("requirements.txt") as install_requires_file:
     install_requires = install_requires_file.read().strip().split("\n")
@@ -23,7 +32,7 @@ with open("README.md") as readme_file:
 
 setup(
     name="prefect-meemoo",
-    version="0.4.2",
+    version=version,
     description="Meemoo Prefect collection with common tasks",
     license="Apache License 2.0",
     author="Lennert Van de Velde",
@@ -43,3 +52,4 @@ setup(
         "triplydb": triplydb_requires,
     },
 )
+
