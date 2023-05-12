@@ -14,7 +14,7 @@ from prefect.states import Failed
     task_run_name="{task_run_name}",
 )
 def run_triplyetl(
-    etl_script_path: str, task_run_name: str = "Run TriplyETL", debug=False, **kwargs
+    etl_script_path: str, task_run_name: str = "Run TriplyETL", **kwargs
 ):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
@@ -106,10 +106,10 @@ def run_triplyetl(
         if not record_message and line:
             if re.match(r"warning", line):
                 logger.warning(line)
-            elif re.match(r"error", line):
+            elif re.match(r"error|Usage Error:", line):
                 logger.error(line)
-            elif debug:
-                logger.info(line.strip())
+            else:
+                logger.debug(line.strip())
 
     # Read final returncode
     rc = p.poll()
