@@ -2434,7 +2434,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@triplyetl/etl@npm:latest":
+"@triplyetl/etl@npm:1.0.1-rc.5":
   version: 1.0.1-rc.5
   resolution: "@triplyetl/etl@npm:1.0.1-rc.5::__archiveUrl=https%3A%2F%2Fgit.triply.cc%2Fapi%2Fv4%2Fprojects%2F463%2Fpackages%2Fnpm%2F%40triplyetl%2Fetl%2F-%2F%40triplyetl%2Fetl-1.0.1-rc.5.tgz"
   dependencies:
@@ -6702,7 +6702,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
-    "@triplyetl/etl": latest
+    "@triplyetl/etl": 1.0.1-rc.5
     "@types/chai": ^4.2.21
     "@types/fs-extra": ^9.0.12
     "@types/lodash": ^4.14.173

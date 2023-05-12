@@ -82,6 +82,34 @@ def test_run_triplyetl_with_variables():
     assert result
     assert rdf_is_equal(expected, "./tests/etl/output/output-variables.ttl")
 
+def test_run_triplyetl_with_none_variable():
+    @flow(name="prefect_flow_triplyetl_none_variables")
+    def test_flow():
+        run_triplyetl(
+            etl_script_path="./tests/etl/dist/variables.js", TEST=None
+        )
+
+    result = test_flow()
+
+    expected = """
+    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+
+    <https://data.hetarchief.be/id/Jane> rdfs:label "undefined".
+    """
+
+    assert result
+    assert rdf_is_equal(expected, "./tests/etl/output/output-variables.ttl")
+
+def test_run_triplyetl_with_none_variable_assert():
+    @flow(name="prefect_flow_triplyetl_none_variables_assert")
+    def test_flow():
+        run_triplyetl(
+            etl_script_path="./tests/etl/dist/variables_assert.js", TEST=None
+        )
+
+    with pytest.raises(Exception):
+        test_flow()
 
 def test_run_triplyetl_with_error():
     @flow(name="prefect_flow_triplyetl_error")
