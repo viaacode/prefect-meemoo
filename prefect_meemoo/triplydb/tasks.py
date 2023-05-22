@@ -4,6 +4,7 @@ import subprocess
 import time
 
 from prefect import get_run_logger, task
+from prefect.artifacts import create_markdown_artifact
 from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
@@ -14,7 +15,7 @@ from prefect.states import Failed
     task_run_name="{task_run_name}",
 )
 def run_triplyetl(
-    etl_script_path: str, task_run_name: str = "Run TriplyETL", **kwargs
+    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = "", **kwargs
 ):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
@@ -115,6 +116,16 @@ def run_triplyetl(
     rc = p.poll()
 
     if rc > 0:
+        try:
+            with open(base_path + "etl.err") as f:
+                error_message = f.read()
+                create_markdown_artifact(
+                    error_message,
+                    key="etl-err",
+                    description="TriplyETL Error",
+                )
+        except FileNotFoundError:
+            pass
         return Failed()
 
     return rc > 0
