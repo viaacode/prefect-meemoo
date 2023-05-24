@@ -15,7 +15,7 @@ from prefect.states import Failed
     task_run_name="{task_run_name}",
 )
 def run_triplyetl(
-    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = "", **kwargs
+    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = os.getcwd(), **kwargs
 ):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
