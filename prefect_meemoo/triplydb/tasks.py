@@ -24,6 +24,7 @@ def run_triplyetl(
 
     # Create an environment for subprocess
     etl_env = os.environ.copy()
+    etl_env["BASE_PATH"] = base_path
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
@@ -38,7 +39,6 @@ def run_triplyetl(
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
         elif value is not None:
             etl_env[key.upper()] = str(value)
-
     p = subprocess.Popen(
         ["yarn", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
