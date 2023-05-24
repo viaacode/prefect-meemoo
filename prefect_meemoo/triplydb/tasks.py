@@ -122,7 +122,7 @@ def run_triplyetl(
                 create_markdown_artifact(
                     error_message,
                     key="etl-err",
-                    description="TriplyETL Error",
+                    description=f"TriplyETL Error: {etl_script_path}",
                 )
         except FileNotFoundError:
             pass
