@@ -5,10 +5,12 @@ from typing import List
 from mediahaven import MediaHaven
 from mediahaven.mediahaven import MediaHavenException
 from mediahaven.oauth2 import RequestTokenError
+from mediahaven.resources.base_resource import MediaHavenPageObject
 from mergedeep import merge
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import JSON
 from prefect.filesystems import LocalFileSystem
+
 from prefect_meemoo.mediahaven.credentials import MediahavenCredentials
 
 '''
@@ -127,10 +129,10 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
         logger.error("Not updated: " + fragment_id)
         raise e
 
-@task(name="Search mediahaven records", cache_result_in_memory=False, persist_result=True, result_storage=LocalFileSystem(basepath='/tmp'))
+@task(name="Search mediahaven records")
 def search_records(
     client: MediaHaven, query : str, last_modified_date=None, start_index=0, nr_of_results=100
-) -> dict:
+) -> MediaHavenPageObject:
 
     """
     Task to query MediaHaven with a given query.
@@ -156,7 +158,7 @@ def search_records(
             f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "outcome_status": "SUCCESS"}}"""
         )
         logger.info("TotalNrOfResults: " + str(records_page.page_result.TotalNrOfResults))
-        return json.loads(records_page.raw_response), records_page.has_more
+        return records_page
     except Exception as error:
         logger.error(
             f"""{{ "outcome_status": "FAIL", "status_message": {error}}}"""
