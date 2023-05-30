@@ -27,6 +27,9 @@ with open("requirements-elasticsearch.txt") as elasticsearch_requires_file:
 with open("requirements-triplydb.txt") as triplydb_requires_file:
     triplydb_requires = triplydb_requires_file.read().strip().split("\n")
 
+with open("requirements-services.txt") as services_requires_file:
+    services_requires = services_requires_file.read().strip().split("\n")
+
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
@@ -50,6 +53,7 @@ setup(
         "mediahaven": mediahaven_requires,
         "elasticsearch": elasticsearch_requires,
         "triplydb": triplydb_requires,
+        "services": services_requires,
     },
 )
 
