@@ -22,9 +22,9 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
     Task that runs an ETL service over HTTP.
 
     Args:
-        api_server (str): _description_
-        api_route (str): _description_
-        last_modified (str): _description_
+        api_server (str): URL of the service
+        api_route (str): API route to run
+        last_modified (str): A datetime indicating when the ETL was last run
 
     Returns:
         _type_: _description_
