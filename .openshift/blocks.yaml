@@ -1,10 +1,10 @@
 ---
 blocks:
   - path: prefect_meemoo/elasticsearch/credentials.py
-    requrirements: requirements-elasticsearch.txt
+    requirements: requirements-elasticsearch.txt
   - path: prefect_meemoo/mediahaven/credentials.py
-    requrirements: requirements-mediahaven.txt
+    requirements: requirements-mediahaven.txt
   - path: prefect_meemoo/triplydb/credentials.py
-    requrirements: requirements-triplydb.txt
+    requirements: requirements-triplydb.txt
 #  - path: prefect_meemoo/config/blocks.py
-#    requrirements: requirements-config.txt
+#    requirements: requirements-config.txt
