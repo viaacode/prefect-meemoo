@@ -93,13 +93,10 @@ pipeline {
         stage('Register prefect block types') {
             steps {
                 script {
-                    runInPrefectContainer("prefect blocks register -f prefect_meemoo/elasticsearch/credentials.py", "requirements-elasticsearch.txt")
-                }
-                script {
-                    runInPrefectContainer("prefect blocks register -f prefect_meemoo/mediahaven/credentials.py", "requirements-mediahaven.txt")
-                }
-                script {
-                    runInPrefectContainer("prefect blocks register -f prefect_meemoo/triplydb/credentials.py", "requirements-triplydb.txt")
+                    def blocks = readYaml file: '.openshift/blocks.yaml'
+                    for (block in blocks.blocks) {
+                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                    }
                 }
             }
         }
