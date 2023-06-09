@@ -8,6 +8,7 @@ from prefect.testing.utilities import prefect_test_harness
 from prefect_meemoo.config.last_run import (get_last_run_config,
                                             save_last_run_config)
 
+
 def test_last_config():
     @flow(on_completion=[save_last_run_config])
     def last_config_flow():

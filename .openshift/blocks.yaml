@@ -6,5 +6,5 @@ blocks:
     requirements: requirements-mediahaven.txt
   - path: prefect_meemoo/triplydb/credentials.py
     requirements: requirements-triplydb.txt
-#  - path: prefect_meemoo/config/blocks.py
-#    requirements: requirements-config.txt
+  - path: prefect_meemoo/config/blocks.py
+    requirements: requirements-config.txt
