@@ -24,8 +24,10 @@ class LastRunConfig(Block):
     _block_type_name = "Last Run Config"
     _logo_url = "https://cdn-icons-png.flaticon.com/512/8766/8766995.png"
 
-    last_run: str = Field(default=datetime.datetime.today().strftime("%Y-%m-%d"), description="The last time the flow ran.")
+    last_run: str = Field(default=datetime.datetime.now(), description="The last time the flow ran.")
     flow_name: str = Field(default=(...), description="The name of the flow.")
-
     _block_schema_capabilities = ["meemoo-prefect", "config"]
+
+    def get_last_run(self, format: str = "%Y-%m-%dT%H:%M:%S.%fZ"):
+        return datetime.datetime.strptime(self.last_run, "%Y-%m-%dT%H:%M:%S.%f").strftime(format)
     

@@ -37,11 +37,13 @@ def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
         last_run_config = LastRunConfig(flow_name=flow.name)
         last_run_config.save(name=name, overwrite=True)
 
-def get_last_run_config():
+def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ"):
     """
     Get the last run config for a flow.
     If the flow is run with the parameter `full_sync` and it is True, the last run config is ignored.
 
+    Arguments:
+        format (str): format of the returned timestamp
     Returns:
         The datetime of the last run config or None if no last run config is found.
     
@@ -70,6 +72,7 @@ def get_last_run_config():
             return None
     try:
         last_run_config: LastRunConfig = LastRunConfig.load(name)
-        return last_run_config.last_run
-    except ValueError:
+        return last_run_config.get_last_run(format)
+    except ValueError as e:
+        print(e)
         return None
