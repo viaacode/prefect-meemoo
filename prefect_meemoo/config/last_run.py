@@ -29,13 +29,9 @@ def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
         name = flow.name
     name += "-lastmodified"
     name = name.replace("_", "-")
-    print(name)
-    try:
-        last_run_config: LastRunConfig = LastRunConfig.load(name)
-        last_run_config.save(name=name, overwrite=True)
-    except ValueError:
-        last_run_config = LastRunConfig(flow_name=flow.name)
-        last_run_config.save(name=name, overwrite=True)
+    last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name)
+    last_run_config.save(name=name, overwrite=True)
+
 
 def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ"):
     """
@@ -64,9 +60,7 @@ def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ"):
         name = flow_run.get_flow_name()
     name += "-lastmodified"
     name = name.replace("_", "-")
-    print(name)
     flow_run_parameters = flow_run.get_parameters()
-    print(flow_run_parameters)
     if "full_sync" in flow_run_parameters:
         if flow_run_parameters["full_sync"]:
             return None

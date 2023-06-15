@@ -1,6 +1,7 @@
 import datetime
 
 from prefect.blocks.core import Block
+from prefect.runtime import flow_run
 from pydantic import Field, SecretStr
 
 
@@ -23,11 +24,10 @@ class LastRunConfig(Block):
 
     _block_type_name = "Last Run Config"
     _logo_url = "https://cdn-icons-png.flaticon.com/512/8766/8766995.png"
-
-    last_run: str = Field(default=datetime.datetime.now(), description="The last time the flow ran.")
+    last_run: str = Field(default=flow_run.get_scheduled_start_time().to_iso8601_string(), description="The last time the flow started.")
     flow_name: str = Field(default=(...), description="The name of the flow.")
     _block_schema_capabilities = ["meemoo-prefect", "config"]
 
     def get_last_run(self, format: str = "%Y-%m-%dT%H:%M:%S.%fZ"):
-        return datetime.datetime.strptime(self.last_run, "%Y-%m-%dT%H:%M:%S.%f").strftime(format)
+        return datetime.datetime.strptime(self.last_run, "%Y-%m-%dT%H:%M:%S.%f%z").strftime(format)
     
