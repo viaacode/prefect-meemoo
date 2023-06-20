@@ -61,6 +61,7 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
             # subprocess.Popen("prefect flow-run ls >/dev/null", shell=True)
             time.sleep(STATUS_DELAY)
 
+        logger.info(f"{api_server}{api_route} sync completed; Service response: {res.text}")
         return datetime.now()
     except ConnectionError as ce:
         logger.error(f"Connection error {ce}")
