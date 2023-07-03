@@ -1,5 +1,4 @@
-import datetime
-
+from dateutil import parser
 from prefect.blocks.core import Block
 from prefect.runtime import flow_run
 from pydantic import Field, SecretStr
@@ -29,5 +28,6 @@ class LastRunConfig(Block):
     _block_schema_capabilities = ["meemoo-prefect", "config"]
 
     def get_last_run(self, format: str = "%Y-%m-%dT%H:%M:%S.%fZ"):
-        return datetime.datetime.strptime(self.last_run, "%Y-%m-%dT%H:%M:%S.%f%z").strftime(format)
+        return parser.parse(self.last_run).strftime(format)
+
     
