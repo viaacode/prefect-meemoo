@@ -40,7 +40,7 @@ def run_triplyetl(
         elif value is not None:
             etl_env[key.upper()] = str(value)
     p = subprocess.Popen(
-        ["yarn", "etl", str(etl_script_abspath), "--plain"],
+        ["npx", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
