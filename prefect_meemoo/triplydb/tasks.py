@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -25,6 +26,7 @@ def run_triplyetl(
     # Create an environment for subprocess
     etl_env = os.environ.copy()
     etl_env["BASE_PATH"] = base_path
+
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
@@ -39,6 +41,7 @@ def run_triplyetl(
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
         elif value is not None:
             etl_env[key.upper()] = str(value)
+
     p = subprocess.Popen(
         ["npx", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
@@ -61,9 +64,19 @@ def run_triplyetl(
         # Remove ANSI escape sequences
         line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
 
+
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
             break
+        
+        if "PREFECT" in line:
+            log_statement = json.loads(line)["PREFECT"]
+            if log_statement["level"] == "INFO":
+                logger.info(log_statement["message"])
+            elif log_statement["level"] == "WARNING":
+                logger.warning(log_statement["message"])
+            elif log_statement["level"] == "ERROR":
+                logger.error(log_statement["message"])
 
         # Start recording log message when encountering start frame
         if re.search(r"╭─|┌─|ERROR", line):
