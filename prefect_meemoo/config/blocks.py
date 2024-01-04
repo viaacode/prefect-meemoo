@@ -1,7 +1,7 @@
 from dateutil import parser
-from prefect.blocks.core import Block
+from prefect.blocks.core import Block, SecretStr
 from prefect.runtime import flow_run
-from pydantic import Field, SecretStr
+from pydantic import Field
 
 
 class LastRunConfig(Block):
