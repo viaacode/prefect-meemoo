@@ -22,6 +22,11 @@ Tasks
     description="Runs an TriplyETL script.",
     task_run_name="{task_run_name}",
 )
-def run_triplyetl(etl_script_path: str, task_run_name: str = "Run TriplyETL", **kwargs):
+def run_triplyetl(
+    etl_script_path: str,
+    task_run_name: str = "Run TriplyETL",
+    base_path=os.getcwd(),
+    **kwargs
+):
     ...
 ```

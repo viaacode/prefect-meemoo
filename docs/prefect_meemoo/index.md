@@ -10,8 +10,9 @@ Prefect Meemoo
 
 ## Modules
 
-- [Blocks](./blocks.md)
+- [Config](config/index.md)
 - [Elasticsearch](elasticsearch/index.md)
 - [Mediahaven](mediahaven/index.md)
 - [Rdf](rdf/index.md)
+- [Services](services/index.md)
 - [Triplydb](triplydb/index.md)
