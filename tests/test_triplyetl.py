@@ -26,7 +26,7 @@ def rdf_is_equal(expected, actual):
 def test_run_triplyetl():
     @flow(name="prefect_flow_triplyetl")
     def test_flow():
-        run_triplyetl(etl_script_path="./tests/etl/dist/index.js", base_path="./tests/etl/")
+        run_triplyetl(etl_script_path="./tests/etl/lib/index.js", base_path="./tests/etl/")
 
     result = test_flow()
 
@@ -46,7 +46,7 @@ def test_add_block_as_variables():
     @flow(name="prefect_flow_triplyetl_block")
     def test_flow():
         run_triplyetl(
-            etl_script_path="./tests/etl/dist/variables_block.js",
+            etl_script_path="./tests/etl/lib/variables_block.js",
             triply=Block(test="test-block"),
             base_path="./tests/etl/"
         )
@@ -68,7 +68,7 @@ def test_run_triplyetl_with_variables():
     @flow(name="prefect_flow_triplyetl_variables")
     def test_flow():
         run_triplyetl(
-            etl_script_path="./tests/etl/dist/variables.js", TEST="test-value", base_path="./tests/etl/"
+            etl_script_path="./tests/etl/lib/variables.js", TEST="test-value", base_path="./tests/etl/"
         )
 
     result = test_flow()
@@ -87,7 +87,7 @@ def test_run_triplyetl_with_none_variable():
     @flow(name="prefect_flow_triplyetl_none_variables")
     def test_flow():
         run_triplyetl(
-            etl_script_path="./tests/etl/dist/variables.js", TEST=None, base_path="./tests/etl/"
+            etl_script_path="./tests/etl/lib/variables.js", TEST=None, base_path="./tests/etl/"
         )
 
     result = test_flow()
@@ -106,7 +106,7 @@ def test_run_triplyetl_with_none_variable_assert():
     @flow(name="prefect_flow_triplyetl_none_variables_assert")
     def test_flow():
         run_triplyetl(
-            etl_script_path="./tests/etl/dist/variables_assert.js", TEST=None, base_path="./tests/etl/"
+            etl_script_path="./tests/etl/lib/variables_assert.js", TEST=None, base_path="./tests/etl/"
         )
 
     with pytest.raises(Exception):
@@ -115,7 +115,7 @@ def test_run_triplyetl_with_none_variable_assert():
 def test_run_triplyetl_with_error():
     @flow(name="prefect_flow_triplyetl_error")
     def test_flow():
-        run_triplyetl(etl_script_path="./tests/etl/dist/error.js", base_path="./tests/etl/")
+        run_triplyetl(etl_script_path="./tests/etl/lib/error.js", base_path="./tests/etl/")
 
     with pytest.raises(Exception):
         test_flow()
@@ -124,7 +124,7 @@ def test_run_triplyetl_with_error():
 def test_run_triplyetl_with_validate():
     @flow(name="prefect_flow_triplyetl_validate")
     def test_flow():
-        run_triplyetl(etl_script_path="./tests/etl/dist/validation.js", base_path="./tests/etl/")
+        run_triplyetl(etl_script_path="./tests/etl/lib/validation.js", base_path="./tests/etl/")
 
     assert test_flow()
 
@@ -132,7 +132,7 @@ def test_run_triplyetl_with_validate():
 def test_run_triplyetl_with_validate_violation():
     @flow(name="prefect_flow_triplyetl_validate_violation")
     def test_flow():
-        run_triplyetl(etl_script_path="./tests/etl/dist/validation_violation.js", base_path="./tests/etl/")
+        run_triplyetl(etl_script_path="./tests/etl/lib/validation_violation.js", base_path="./tests/etl/")
 
     with pytest.raises(Exception):
         test_flow()

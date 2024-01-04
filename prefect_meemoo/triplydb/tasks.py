@@ -67,63 +67,66 @@ def run_triplyetl(
 
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
+            if record_message:
+                logger.error(message)
             break
         
         if "PREFECT" in line:
             log_statement = json.loads(line)["PREFECT"]
             if log_statement["level"] == "INFO":
-                logger.info(log_statement["message"])
+                logger.info(line)
             elif log_statement["level"] == "WARNING":
-                logger.warning(log_statement["message"])
+                logger.warning(line)
             elif log_statement["level"] == "ERROR":
-                logger.error(log_statement["message"])
+                logger.error(line)
+                record_message = True
 
-        # Start recording log message when encountering start frame
-        if re.search(r"╭─|┌─|ERROR", line):
-            record_message = True
+        # # Start recording log message when encountering start frame
+        # if re.search(r"╭─|┌─|ERROR", line):
+        #     record_message = True
 
-        # Set message to error when encountering ERROR
-        if re.search(r"ERROR", line):
-            error = True
+        # # Set message to error when encountering ERROR
+        # if re.search(r"ERROR", line):
+        #     error = True
 
         if record_message:
             message += line
 
-        # Stop recording log message when encountering end frame
-        if re.search(r"╰─|└─", line):
-            if error:
-                logger.error(message)
-            else:
-                logger.info(message)
-            record_message = False
-            message = ""
-            error = False
+        # # Stop recording log message when encountering end frame
+        # if re.search(r"╰─|└─", line):
+        #     if error:
+        #         logger.error(message)
+        #     else:
+        #         logger.info(message)
+        #     record_message = False
+        #     message = ""
+        #     error = False
 
-        if re.search(r"etl.err", line):
-            logger.error(message)
-            record_message = False
-            message = ""
-            error = False
+        # if re.search(r"etl.err", line):
+        #     logger.error(message)
+        #     record_message = False
+        #     message = ""
+        #     error = False
 
-        if re.search(r"Info", line) and not (
-            re.search(r"Error", line) or re.search(r"Warning", line)
-        ):
-            logger.info(line)
+        # if re.search(r"Info", line) and not (
+        #     re.search(r"Error", line) or re.search(r"Warning", line)
+        # ):
+        #     logger.info(line)
 
-        if re.search(r"#Statements:", line):
-            if line != prev_statements and time.time() - last_statement_time > 10:
-                logger.info(line)
-                prev_statements = line
-                last_statement_time = time.time()
+        # if re.search(r"#Statements:", line):
+        #     if line != prev_statements and time.time() - last_statement_time > 10:
+        #         logger.info(line)
+        #         prev_statements = line
+        #         last_statement_time = time.time()
 
-        # The line did not trigger a message, log seperately
-        if not record_message and line:
-            if re.match(r"warning", line):
-                logger.warning(line)
-            elif re.match(r"error|Usage Error:", line):
-                logger.error(line)
-            else:
-                logger.debug(line.strip())
+        # # The line did not trigger a message, log seperately
+        # if not record_message and line:
+        #     if re.match(r"warning", line):
+        #         logger.warning(line)
+        #     elif re.match(r"error|Usage Error:", line):
+        #         logger.error(line)
+        #     else:
+        #         logger.debug(line.strip())
 
     # Read final returncode
     rc = p.poll()
