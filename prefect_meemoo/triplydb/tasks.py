@@ -9,6 +9,11 @@ from prefect.artifacts import create_markdown_artifact
 from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
+# def create_etl_err_artifact(flow, flow_run, state):
+#     """
+#     Create an artifact with the given filename.
+#     """
+#     return
 
 @task(
     name="Run TriplyETL",
@@ -54,9 +59,8 @@ def run_triplyetl(
 
     record_message = False
     message = ""
-    prev_statements = ""
     error = False
-    last_statement_time = time.time() - 10
+    # files_not_yet_mapped = []
 
     # Parse CLI output from TriplyETL for logging
     while True:
@@ -86,56 +90,13 @@ def run_triplyetl(
                 logger.error(line)
                 record_message = True
 
-        # # Start recording log message when encountering start frame
-        # if re.search(r"╭─|┌─|ERROR", line):
-        #     record_message = True
-
-        # # Set message to error when encountering ERROR
-        # if re.search(r"ERROR", line):
-        #     error = True
-
         if record_message:
             message += line
 
-        # # Stop recording log message when encountering end frame
-        # if re.search(r"╰─|└─", line):
-        #     if error:
-        #         logger.error(message)
-        #     else:
-        #         logger.info(message)
-        #     record_message = False
-        #     message = ""
-        #     error = False
-
-        # if re.search(r"etl.err", line):
-        #     logger.error(message)
-        #     record_message = False
-        #     message = ""
-        #     error = False
-
-        # if re.search(r"Info", line) and not (
-        #     re.search(r"Error", line) or re.search(r"Warning", line)
-        # ):
-        #     logger.info(line)
-
-        # if re.search(r"#Statements:", line):
-        #     if line != prev_statements and time.time() - last_statement_time > 10:
-        #         logger.info(line)
-        #         prev_statements = line
-        #         last_statement_time = time.time()
-
-        # # The line did not trigger a message, log seperately
-        # if not record_message and line:
-        #     if re.match(r"warning", line):
-        #         logger.warning(line)
-        #     elif re.match(r"error|Usage Error:", line):
-        #         logger.error(line)
-        #     else:
-        #         logger.debug(line.strip())
 
     # Read final returncode
     rc = p.poll()
-
+    logger.info("rc: " + rc)
     if rc > 0:
         try:
             with open(base_path + "etl.err") as f:
@@ -146,7 +107,7 @@ def run_triplyetl(
                     description=f"TriplyETL Error: {etl_script_path}",
                 )
         except FileNotFoundError:
-            pass
+            logger.info("File not found: " + base_path + "etl.err")
         return Failed()
 
     return rc > 0
