@@ -96,7 +96,7 @@ def run_triplyetl(
 
     # Read final returncode
     rc = p.poll()
-    logger.info("rc: " + rc)
+    logger.info("rc: " + str(rc))
     if rc > 0:
         try:
             with open(base_path + "etl.err") as f:
