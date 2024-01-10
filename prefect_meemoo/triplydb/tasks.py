@@ -96,10 +96,11 @@ def run_triplyetl(
 
     # Read final returncode
     rc = p.poll()
+    logger.info(etl_script_abspath)
     logger.info("rc: " + str(rc))
     if rc > 0:
         try:
-            with open(base_path + "etl.err") as f:
+            with open(base_path + "lib/etl.err") as f:
                 error_message = f.read()
                 create_markdown_artifact(
                     error_message,
@@ -107,7 +108,7 @@ def run_triplyetl(
                     description=f"TriplyETL Error: {etl_script_path}",
                 )
         except FileNotFoundError:
-            logger.info("File not found: " + base_path + "etl.err")
+            logger.info("File not found: " + base_path + "lib/etl.err")
         return Failed()
 
     return rc > 0
