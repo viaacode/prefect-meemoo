@@ -68,7 +68,6 @@ def run_triplyetl(
         # Remove ANSI escape sequences
         line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
 
-
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
             if record_message:
@@ -89,6 +88,11 @@ def run_triplyetl(
             elif log_statement["level"] == "ERROR":
                 logger.error(line)
                 record_message = True
+
+        if "ERROR" in line:
+            logger.error(line)
+            record_message = True
+
 
         if record_message:
             message += line
