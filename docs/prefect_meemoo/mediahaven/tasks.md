@@ -19,7 +19,7 @@ Tasks
 
 ## fragment_metadata_update
 
-[Show source in tasks.py:254](../../../prefect_meemoo/mediahaven/tasks.py#L254)
+[Show source in tasks.py:256](../../../prefect_meemoo/mediahaven/tasks.py#L256)
 
 Generate JSON for updating metadata of a fragment and update in MediaHaven.
 
@@ -46,7 +46,7 @@ def fragment_metadata_update(client: MediaHaven, fragment_id: str, fields: dict)
 
 ## generate_record_json
 
-[Show source in tasks.py:166](../../../prefect_meemoo/mediahaven/tasks.py#L166)
+[Show source in tasks.py:168](../../../prefect_meemoo/mediahaven/tasks.py#L168)
 
 Generate a json object that can be used to update metadata in MediaHaven
 
@@ -76,7 +76,7 @@ def generate_record_json(
 
 ## get_field_definition
 
-[Show source in tasks.py:78](../../../prefect_meemoo/mediahaven/tasks.py#L78)
+[Show source in tasks.py:80](../../../prefect_meemoo/mediahaven/tasks.py#L80)
 
 Get the field definition from MediaHaven
 
@@ -104,7 +104,7 @@ def get_field_definition(client: MediaHaven, field_flat_key: str) -> dict:
 
 ## get_organisation
 
-[Show source in tasks.py:22](../../../prefect_meemoo/mediahaven/tasks.py#L22)
+[Show source in tasks.py:24](../../../prefect_meemoo/mediahaven/tasks.py#L24)
 
 Get an organisation from MediaHaven
 
@@ -135,7 +135,7 @@ def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
 
 ## search_organisations
 
-[Show source in tasks.py:49](../../../prefect_meemoo/mediahaven/tasks.py#L49)
+[Show source in tasks.py:51](../../../prefect_meemoo/mediahaven/tasks.py#L51)
 
 Get a list of organisations from MediaHaven
 
@@ -165,7 +165,7 @@ def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
 
 ## search_records
 
-[Show source in tasks.py:130](../../../prefect_meemoo/mediahaven/tasks.py#L130)
+[Show source in tasks.py:132](../../../prefect_meemoo/mediahaven/tasks.py#L132)
 
 Task to query MediaHaven with a given query.
 
@@ -184,19 +184,14 @@ Task to query MediaHaven with a given query.
 #### Signature
 
 ```python
-@task(
-    name="Search mediahaven records",
-    cache_result_in_memory=False,
-    persist_result=True,
-    result_storage=LocalFileSystem(basepath="/tmp"),
-)
+@task(name="Search mediahaven records")
 def search_records(
     client: MediaHaven,
     query: str,
     last_modified_date=None,
     start_index=0,
     nr_of_results=100,
-) -> dict:
+) -> MediaHavenPageObject:
     ...
 ```
 
@@ -204,7 +199,7 @@ def search_records(
 
 ## update_record
 
-[Show source in tasks.py:105](../../../prefect_meemoo/mediahaven/tasks.py#L105)
+[Show source in tasks.py:107](../../../prefect_meemoo/mediahaven/tasks.py#L107)
 
 Update metadata of a fragment.
 
@@ -231,7 +226,7 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
 
 ## update_single_value_flow
 
-[Show source in tasks.py:283](../../../prefect_meemoo/mediahaven/tasks.py#L283)
+[Show source in tasks.py:285](../../../prefect_meemoo/mediahaven/tasks.py#L285)
 
 Flow to update metadata in MediaHaven.
 

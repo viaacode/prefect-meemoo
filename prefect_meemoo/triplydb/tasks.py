@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -8,6 +9,11 @@ from prefect.artifacts import create_markdown_artifact
 from prefect.blocks.core import Block, SecretStr
 from prefect.states import Failed
 
+# def create_etl_err_artifact(flow, flow_run, state):
+#     """
+#     Create an artifact with the given filename.
+#     """
+#     return
 
 @task(
     name="Run TriplyETL",
@@ -25,6 +31,7 @@ def run_triplyetl(
     # Create an environment for subprocess
     etl_env = os.environ.copy()
     etl_env["BASE_PATH"] = base_path
+
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
         if issubclass(type(value), Block):
@@ -39,6 +46,7 @@ def run_triplyetl(
                     etl_env[f"{key.upper()}_{b_key.upper()}"] = str(b_value)
         elif value is not None:
             etl_env[key.upper()] = str(value)
+
     p = subprocess.Popen(
         ["npx", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
@@ -51,9 +59,8 @@ def run_triplyetl(
 
     record_message = False
     message = ""
-    prev_statements = ""
     error = False
-    last_statement_time = time.time() - 10
+    # files_not_yet_mapped = []
 
     # Parse CLI output from TriplyETL for logging
     while True:
@@ -63,61 +70,41 @@ def run_triplyetl(
 
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
+            if record_message:
+                logger.error(message)
             break
+        
+        if "PREFECT" in line:
+            log_statement = json.loads(line)["PREFECT"]
+            if log_statement["level"] == "INFO":
+                try:
+                    if log_statement["message"] == "error":
+                        record_message = True
+                except KeyError:
+                    pass
+                logger.info(line)
+            elif log_statement["level"] == "WARNING":
+                logger.warning(line)
+            elif log_statement["level"] == "ERROR":
+                logger.error(line)
+                record_message = True
 
-        # Start recording log message when encountering start frame
-        if re.search(r"╭─|┌─|ERROR", line):
+        if "ERROR" in line:
+            logger.error(line)
             record_message = True
 
-        # Set message to error when encountering ERROR
-        if re.search(r"ERROR", line):
-            error = True
 
         if record_message:
             message += line
 
-        # Stop recording log message when encountering end frame
-        if re.search(r"╰─|└─", line):
-            if error:
-                logger.error(message)
-            else:
-                logger.info(message)
-            record_message = False
-            message = ""
-            error = False
-
-        if re.search(r"etl.err", line):
-            logger.error(message)
-            record_message = False
-            message = ""
-            error = False
-
-        if re.search(r"Info", line) and not (
-            re.search(r"Error", line) or re.search(r"Warning", line)
-        ):
-            logger.info(line)
-
-        if re.search(r"#Statements:", line):
-            if line != prev_statements and time.time() - last_statement_time > 10:
-                logger.info(line)
-                prev_statements = line
-                last_statement_time = time.time()
-
-        # The line did not trigger a message, log seperately
-        if not record_message and line:
-            if re.match(r"warning", line):
-                logger.warning(line)
-            elif re.match(r"error|Usage Error:", line):
-                logger.error(line)
-            else:
-                logger.debug(line.strip())
 
     # Read final returncode
     rc = p.poll()
-
+    logger.info(etl_script_abspath)
+    logger.info("rc: " + str(rc))
     if rc > 0:
         try:
-            with open(base_path + "etl.err") as f:
+            with open(base_path + "lib/etl.err") as f:
                 error_message = f.read()
                 create_markdown_artifact(
                     error_message,
@@ -125,7 +112,7 @@ def run_triplyetl(
                     description=f"TriplyETL Error: {etl_script_path}",
                 )
         except FileNotFoundError:
-            pass
+            logger.info("File not found: " + base_path + "lib/etl.err")
         return Failed()
 
     return rc > 0

@@ -1,25 +1,25 @@
 {
-  "scripts": {
-    "build": "./node_modules/.bin/tsc"
-  },
+  "author": "Triply <info@triply.cc>",
+  "type": "module",
   "dependencies": {
-    "@triplyetl/etl": "1.0.1-rc.5"
+    "@triplyetl/etl": "^3.0.0"
   },
-  "packageManager": "yarn@3.5.0",
-  "devDependencies": {
-    "@types/chai": "^4.2.21",
-    "@types/fs-extra": "^9.0.12",
-    "@types/lodash": "^4.14.173",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "16",
-    "@typescript-eslint/eslint-plugin": "^5.28.0",
-    "@typescript-eslint/parser": "^5.28.0",
-    "eslint": "^8.17.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-jest": "^26.5.3",
-    "husky": "8.0.1",
-    "lint-staged": "^13.0.1",
-    "prettier": "^2.4.1",
-    "typescript": "^4.7.4"
-  }
+  "description": "Triply ETL for test",
+  "lint-staged": {
+    "*.ts?(x)": [
+      "npm run util:lint:precommit"
+    ]
+  },
+  "main": "lib/main.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput",
+    "util:lint": "ESLINT_STRICT=true ESLINT_EXPENSIVE=true eslint --ext .tsx --ext .ts ./src",
+    "util:lint:precommit": "ESLINT_STRICT=true eslint",
+    "util:validateTs": "tsc --noEmit",
+    "util:validateTs:watch": "tsc --noEmit --watch --preserveWatchOutput"
+  },
+  "version": "1.0.0",
+  "name": "test"
 }
