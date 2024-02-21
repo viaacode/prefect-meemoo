@@ -131,7 +131,7 @@ def update_record(client: MediaHaven, fragment_id, xml=None, json=None) -> bool:
 
 @task(name="Search mediahaven records")
 def search_records(
-    client: MediaHaven, query : str, last_modified_date=None, start_index=0, nr_of_results=100
+    client: MediaHaven, query : str, last_modified_date=None, start_index=0, nr_of_results=100, sort:str=""
 ) -> MediaHavenPageObject:
 
     """
@@ -153,7 +153,7 @@ def search_records(
         query += f'AND +(LastModifiedDate:[{last_modified_date} TO *])'
 
     try:
-        records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, )
+        records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, sort=sort)
         logger.info(
             f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "outcome_status": "SUCCESS"}}"""
         )
