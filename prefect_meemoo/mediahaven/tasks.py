@@ -151,8 +151,9 @@ def search_records(
     # Adding LastModified to query
     if last_modified_date:
         if "[" in last_modified_date:
-            query += f"AND +(LastModifiedDate:{last_modified_date})"
-        query += f'AND +(LastModifiedDate:[{last_modified_date} TO *])'
+            query += f" AND +(LastModifiedDate:{last_modified_date})"
+        else:
+            query += f' AND +(LastModifiedDate:[{last_modified_date} TO *])'
     try:
         records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, sort=sort)
         logger.info(
