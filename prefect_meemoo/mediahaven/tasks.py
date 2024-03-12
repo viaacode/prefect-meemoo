@@ -47,7 +47,32 @@ def get_organisation(client: MediaHaven, organisation_id: str) -> dict:
         logger.error(e)
         raise e
 
-        
+@task(name="Get organisation")
+def get_organisation_by_external_id(client: MediaHaven, external_id: str) -> dict:
+    '''
+    Get an organisation from MediaHaven by ExternalId
+
+    Parameters:
+        - client: MediaHaven client
+        - external_id: ExternalId of the organisation
+
+    Returns:
+        - organisation (dict)
+            - ID
+            - Name
+            - LongName
+            - ExternalID
+            - CustomProperties
+            - TenantGroup
+    '''
+    logger = get_run_logger()
+    try:
+        organisation = json.loads(client.organisations.get_by_external_id(external_id=external_id).raw_response())
+        return organisation
+    except Exception as e:
+        logger.error(e)
+        raise e
+
 @task(name="Search organisations")
 def search_organisations(client: MediaHaven, **query_params) -> List[dict]:
     '''
