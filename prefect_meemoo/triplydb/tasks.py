@@ -60,7 +60,6 @@ def run_triplyetl(
     record_message = False
     message = ""
     error = False
-    # files_not_yet_mapped = []
 
     # Parse CLI output from TriplyETL for logging
     while True:
@@ -87,11 +86,7 @@ def run_triplyetl(
                 logger.warning(line)
             elif log_statement["level"] == "ERROR":
                 logger.error(line)
-                record_message = True
 
-        if "ERROR" in line:
-            logger.error(line)
-            record_message = True
 
 
         if record_message:
@@ -100,7 +95,6 @@ def run_triplyetl(
 
     # Read final returncode
     rc = p.poll()
-    logger.info(etl_script_abspath)
     logger.info("rc: " + str(rc))
     if rc > 0:
         try:

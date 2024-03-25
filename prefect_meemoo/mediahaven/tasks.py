@@ -175,14 +175,14 @@ def search_records(
     logger = get_run_logger()
     # Adding LastModified to query
     if last_modified_date:
-        if "[" in last_modified_date:
-            query += f" AND +(LastModifiedDate:{last_modified_date})"
+        if "[" in last_modified_date or "]" in last_modified_date:
+            query += f" +(LastModifiedDate:{last_modified_date})"
         else:
-            query += f' AND +(LastModifiedDate:[{last_modified_date} TO *])'
+            query += f' +(LastModifiedDate:[{last_modified_date} TO *])'
     try:
         records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, sort=sort)
         logger.info(
-            f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "outcome_status": "SUCCESS"}}"""
+            f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "sort": {sort}, "outcome_status": "SUCCESS"}}"""
         )
         logger.info("TotalNrOfResults: " + str(records_page.page_result.TotalNrOfResults))
         return records_page
