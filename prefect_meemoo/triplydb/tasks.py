@@ -87,11 +87,10 @@ def run_triplyetl(
                 logger.warning(line)
             elif log_statement["level"] == "ERROR":
                 logger.error(line)
-                record_message = True
 
-        if "ERROR" in line:
-            logger.error(line)
-            record_message = True
+        # if "ERROR" in line:
+        #     logger.error(line)
+        #     record_message = True
 
 
         if record_message:
