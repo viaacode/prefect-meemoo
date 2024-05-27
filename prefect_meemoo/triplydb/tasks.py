@@ -81,11 +81,11 @@ def run_triplyetl(
                         record_message = True
                 except KeyError:
                     pass
-                logger.info(line)
+                logger.info(log_statement)
             elif log_statement["level"] == "WARNING":
-                logger.warning(line)
+                logger.warning(log_statement)
             elif log_statement["level"] == "ERROR":
-                logger.error(line)
+                logger.error(log_statement)
 
 
 
