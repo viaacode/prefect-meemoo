@@ -72,7 +72,8 @@ def run_triplyetl(
         line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
 
         # Push to queue
-        log_queue.append(line)
+        if line:
+            log_queue.append(line)
 
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
