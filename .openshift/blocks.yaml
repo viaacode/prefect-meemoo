@@ -8,3 +8,5 @@ blocks:
     requirements: requirements-triplydb.txt
   - path: prefect_meemoo/config/blocks.py
     requirements: requirements-config.txt
+  - path: prefect_meemoo/rabbitmq/credentials.py
+    requirements: requirements-rabbitmq.txt
