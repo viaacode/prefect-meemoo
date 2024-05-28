@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+from collections import deque
 
 from prefect import get_run_logger, task
 from prefect.artifacts import create_markdown_artifact
@@ -31,6 +32,9 @@ def run_triplyetl(
     # Create an environment for subprocess
     etl_env = os.environ.copy()
     etl_env["BASE_PATH"] = base_path
+
+    # 
+    log_queue = deque(maxlen = 30)
 
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
@@ -67,6 +71,9 @@ def run_triplyetl(
         # Remove ANSI escape sequences
         line = re.sub(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", line)
 
+        # Push to queue
+        log_queue.append(line)
+
         # Break loop when subprocess has ended
         if line == "" and p.poll() is not None:
             if record_message:
@@ -81,13 +88,11 @@ def run_triplyetl(
                         record_message = True
                 except KeyError:
                     pass
-                logger.info(line)
+                logger.info(log_statement)
             elif log_statement["level"] == "WARNING":
-                logger.warning(line)
+                logger.warning(log_statement)
             elif log_statement["level"] == "ERROR":
-                logger.error(line)
-
-
+                logger.error(log_statement)
 
         if record_message:
             message += line
@@ -97,6 +102,7 @@ def run_triplyetl(
     rc = p.poll()
     logger.info("rc: " + str(rc))
     if rc > 0:
+        logger.error('\n'.join(log_queue))
         try:
             with open(base_path + "lib/etl.err") as f:
                 error_message = f.read()
