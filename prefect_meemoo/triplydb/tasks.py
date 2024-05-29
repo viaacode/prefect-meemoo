@@ -22,7 +22,7 @@ from prefect.states import Failed
     task_run_name="{task_run_name}",
 )
 def run_triplyetl(
-    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = os.getcwd(), **kwargs
+    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = os.getcwd(), n_lines_after_fail=30, **kwargs
 ):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
@@ -34,7 +34,7 @@ def run_triplyetl(
     etl_env["BASE_PATH"] = base_path
 
     # 
-    log_queue = deque(maxlen = 30)
+    log_queue = deque(maxlen = n_lines_after_fail)
 
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
