@@ -83,7 +83,9 @@ def run_triplyetl(
         
         if "PREFECT" in line:
             log_statement = json.loads(line)["PREFECT"]
-            if log_statement["level"] == "INFO":
+            if log_statement["level"] == "DEBUG":
+                logger.debug(log_statement)
+            elif log_statement["level"] == "INFO":
                 try:
                     if log_statement["message"] == "error":
                         record_message = True
