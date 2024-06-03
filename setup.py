@@ -15,6 +15,9 @@ with open("requirements.txt") as install_requires_file:
 with open("requirements-dev.txt") as dev_requires_file:
     dev_requires = dev_requires_file.read().strip().split("\n")
 
+with open("requirements-rabbitmq.txt") as rabbitmq_requires_file:
+    rabbitmq_requires = rabbitmq_requires_file.read().strip().split("\n")
+
 with open("requirements-rdf.txt") as rdf_requires_file:
     rdf_requires = rdf_requires_file.read().strip().split("\n")
 
@@ -49,6 +52,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         "dev": dev_requires,
+        "rabbitmq": rabbitmq_requires,
         "rdf": rdf_requires,
         "mediahaven": mediahaven_requires,
         "elasticsearch": elasticsearch_requires,
