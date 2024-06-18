@@ -1,4 +1,3 @@
-import pendulum
 from prefect.runtime import deployment, flow_run
 from prefect.server.schemas.core import Flow, FlowRun
 
@@ -30,11 +29,10 @@ def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
         name = flow.name
     name += "-lastmodified"
     name = name.replace("_", "-")
-    last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name)
-    current_last_run_config = _get_current_last_run_config(name)
-    if current_last_run_config:
-        last_run_config.last_run_dict = current_last_run_config.last_run_dict
-    last_run_config.save(name=name, overwrite=True)
+    last_run_config = _get_current_last_run_config(name)
+    if not last_run_config:
+        last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name, name = name)
+    last_run_config.add_last_run(time=flow_run.start_time)
 
 def _get_current_last_run_config_name(name=None) -> str:
     name = deployment.get_name()
@@ -55,9 +53,8 @@ def add_last_run_with_context(context):
     name = _get_current_last_run_config_name()
     last_run_config = _get_current_last_run_config(name)
     if not last_run_config:
-        last_run_config: LastRunConfig = LastRunConfig(flow_name=flow_run.get_flow_name())
-    last_run_config.last_run_dict[context] = pendulum.now().to_iso8601_string()
-    last_run_config.save(name=name, overwrite=True) 
+        last_run_config: LastRunConfig = LastRunConfig(flow_name=flow_run.get_flow_name(), name=name)
+    last_run_config.add_last_run(context)
 
 def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""):
     """
