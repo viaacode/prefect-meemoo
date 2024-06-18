@@ -25,23 +25,27 @@ def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
             logger.info(get_last_run_config())
         ```
     """
-    current_last_run_config = _get_current_last_run_config(flow.name)
-    name = _get_current_last_run_config_name()
+    name = deployment.get_name()
+    if not name:
+        name = flow.name
+    name += "-lastmodified"
+    name = name.replace("_", "-")
     last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name)
+    current_last_run_config = _get_current_last_run_config(name)
     if current_last_run_config:
         last_run_config.last_run_dict = current_last_run_config.last_run_dict
     last_run_config.save(name=name, overwrite=True)
 
 def _get_current_last_run_config_name(name=None) -> str:
-    if not name:
-        name = deployment.get_name()
+    name = deployment.get_name()
     if not name:
         name = flow_run.get_flow_name()
     name += "-lastmodified"
     return name.replace("_", "-")
     
 def _get_current_last_run_config(name=None) -> LastRunConfig: 
-    name = _get_current_last_run_config_name(name)
+    if not name:
+        name = _get_current_last_run_config_name()
     try:
         return LastRunConfig.load(name)
     except ValueError as e:
@@ -49,7 +53,7 @@ def _get_current_last_run_config(name=None) -> LastRunConfig:
 
 def add_last_run_with_context(context):
     name = _get_current_last_run_config_name()
-    last_run_config = _get_current_last_run_config()
+    last_run_config = _get_current_last_run_config(name)
     if not last_run_config:
         last_run_config: LastRunConfig = LastRunConfig(flow_name=flow_run.get_flow_name())
     last_run_config.last_run_dict[context] = pendulum.now().to_iso8601_string()
