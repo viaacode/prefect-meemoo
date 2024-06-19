@@ -34,7 +34,7 @@ pipeline {
                     allOf {
                         buildingTag()
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('int')
+                            return env.BUILD_CONFIG_NAME.contains('a')
                         }
                     }
                 }
@@ -61,7 +61,7 @@ pipeline {
                     allOf {
                         buildingTag()
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('qas')
+                            return env.BUILD_CONFIG_NAME.contains('b')
                         }
                     }
                 }
@@ -83,7 +83,7 @@ pipeline {
                     buildingTag()
                     not {
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('qas') || env.BUILD_CONFIG_NAME.contains('int')
+                            return env.BUILD_CONFIG_NAME.contains('a') || env.BUILD_CONFIG_NAME.contains('b')
                         }
                     }
                 }
