@@ -34,7 +34,7 @@ pipeline {
                     allOf {
                         buildingTag()
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('a')
+                            return env.BUILD_CONFIG_NAME.contains('int')
                         }
                     }
                 }
@@ -61,7 +61,7 @@ pipeline {
                     allOf {
                         buildingTag()
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('b')
+                            return env.BUILD_CONFIG_NAME.contains('qas')
                         }
                     }
                 }
@@ -83,7 +83,7 @@ pipeline {
                     buildingTag()
                     not {
                         expression {
-                            return env.BUILD_CONFIG_NAME.contains('b') || env.BUILD_CONFIG_NAME.contains('a')
+                            return env.BUILD_CONFIG_NAME.contains('qas') || env.BUILD_CONFIG_NAME.contains('int')
                         }
                     }
                 }
@@ -117,14 +117,11 @@ pipeline {
                 buildingTag()
             }
             steps {
-                // script {
-                //     def blocks = readYaml file: '.openshift/blocks.yaml'
-                //     for (block in blocks.blocks) {
-                //         runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
-                //     }
-                // }
                 script {
-                    sh "echo ${PREFECT_API}"
+                    def blocks = readYaml file: '.openshift/blocks.yaml'
+                    for (block in blocks.blocks) {
+                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                    }
                 }
             }
         }
