@@ -117,11 +117,14 @@ pipeline {
                 buildingTag()
             }
             steps {
+                // script {
+                //     def blocks = readYaml file: '.openshift/blocks.yaml'
+                //     for (block in blocks.blocks) {
+                //         runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                //     }
+                // }
                 script {
-                    def blocks = readYaml file: '.openshift/blocks.yaml'
-                    for (block in blocks.blocks) {
-                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
-                    }
+                    sh "echo ${PREFECT_API}"
                 }
             }
         }
