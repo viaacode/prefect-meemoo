@@ -31,6 +31,12 @@ pipeline {
                 anyOf {
                     changeRequest target: 'master'
                     changeRequest target: 'main'
+                    allOf {
+                        buildingTag()
+                        expression {
+                            return env.BUILD_CONFIG_NAME.contains('a')
+                        }
+                    }
                 }
             }
             steps {
@@ -49,7 +55,16 @@ pipeline {
         }
         stage('Calculate QAS ENV variables') {
             when {
-                anyOf { branch 'master'; branch 'main' }
+                anyOf { 
+                    branch 'master'
+                    branch 'main'
+                    allOf {
+                        buildingTag()
+                        expression {
+                            return env.BUILD_CONFIG_NAME.contains('b')
+                        }
+                    }
+                }
             }
             steps {
                 script {
@@ -64,7 +79,14 @@ pipeline {
         }
         stage('Calculate PRD ENV variables') {
             when {
-                buildingTag()
+                allOf{
+                    buildingTag()
+                    not {
+                        expression {
+                            return env.BUILD_CONFIG_NAME.contains('b') || env.BUILD_CONFIG_NAME.contains('a')
+                        }
+                    }
+                }
             }
             steps {
                 script {
