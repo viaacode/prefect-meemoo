@@ -113,6 +113,9 @@ pipeline {
             }
         }
         stage('Register prefect block types') {
+            when {
+                buildingTag()
+            }
             steps {
                 script {
                     def blocks = readYaml file: '.openshift/blocks.yaml'
