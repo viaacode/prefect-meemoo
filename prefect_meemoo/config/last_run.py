@@ -1,3 +1,4 @@
+import pendulum
 from prefect.runtime import deployment, flow_run
 from prefect.server.schemas.core import Flow, FlowRun
 
@@ -49,7 +50,7 @@ def _get_current_last_run_config(name=None) -> LastRunConfig:
     except ValueError as e:
         return None
 
-def add_last_run_with_context(context):
+def add_last_run_with_context(context: str, time: pendulum.DateTime=None):
     name = _get_current_last_run_config_name()
     last_run_config = _get_current_last_run_config(name)
     if not last_run_config:
