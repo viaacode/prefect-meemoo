@@ -160,7 +160,7 @@ pipeline {
                 script {
                     def flows = readYaml file: '.openshift/flows.yaml'
                     for (flow in flows.flows) {
-                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV --path tests/flows/${flow.filename} -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE --apply")
+                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV --path opt/prefect/flows/${flow.filename} -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE --apply")
                     }                
                 }
             }
