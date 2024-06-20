@@ -11,6 +11,9 @@ pipeline {
         JIRA_URL = 'meemoo.atlassian.net'
         APP_NAME = 'prefect-meemoo'
         PREFECT_QUEUE= 'q-test'
+        REGISTRY = 'default-route-openshift-image-registry.meemoo2-2bc857e5f10eb63ab790a3a1d19a696c-i000.eu-de.containers.appdomain.cloud'
+        REGISTRY_SCHEMA = "https://$REGISTRY"
+        REGISTRY_CREDENTIAL = 'docker-reg'
     }
 
     stages {
