@@ -6,7 +6,8 @@ from prefect_meemoo.config.last_run import (add_last_run_with_context,
                                             get_last_run_config,
                                             save_last_run_config)
 
-flow(name="test_last_run_config",  on_completion=[save_last_run_config])
+
+@flow(name="test_last_run_config",  on_completion=[save_last_run_config])
 def main_flow():
     logger = get_run_logger()
 
