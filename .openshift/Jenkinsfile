@@ -135,7 +135,7 @@ pipeline {
             }
             steps {
                 script {
-                    dockerImage = docker.build("$REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT", "-f tests/flows/Dockerfile", "--build-arg PREFECT_VERSION=$PREFECT_VERSION .")
+                    dockerImage = docker.build("$REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT", "-f tests/flows/Dockerfile --build-arg PREFECT_VERSION=$PREFECT_VERSION .")
                     docker.withRegistry(REGISTRY_SCHEMA, REGISTRY_CREDENTIAL) {
                         dockerImage.push()
                     }
