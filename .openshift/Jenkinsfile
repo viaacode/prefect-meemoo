@@ -10,6 +10,7 @@ pipeline {
         OC_URL = 'https://c113-e.private.eu-de.containers.cloud.ibm.com:30227'
         JIRA_URL = 'meemoo.atlassian.net'
         APP_NAME = 'prefect-meemoo'
+        PREFECT_QUEUE= 'q-test'
     }
 
     stages {
@@ -99,7 +100,7 @@ pipeline {
                 sh 'echo "No tests implemented"'
             }
         }
-        stage('Build and publish python package') {
+        stage('Package: Build and publish python package') {
             when {
                 buildingTag()
             }
@@ -112,7 +113,7 @@ pipeline {
 
             }
         }
-        stage('Register prefect block types') {
+        stage('Blocks: Register prefect block types') {
             when {
                 buildingTag()
             }
@@ -122,6 +123,42 @@ pipeline {
                     for (block in blocks.blocks) {
                         runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
                     }
+                }
+            }
+        }
+        stage('Test flows: Build and push docker') {
+            when {
+                buildingTag()
+            }
+            steps {
+                script {
+                    dockerImage = docker.build("$REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT", "-f tests/flows/Dockerfile", "--build-arg PREFECT_VERSION=$PREFECT_VERSION .")
+                    docker.withRegistry(REGISTRY_SCHEMA, REGISTRY_CREDENTIAL) {
+                        dockerImage.push()
+                    }
+                }
+            }
+        }
+        stage('Test flows: Build Python Infra Block') {
+            when {
+                buildingTag()
+            }
+            steps {
+                script {
+                    runInPrefectContainer("python infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry")
+                }
+            }
+        }
+        stage('Test flows: Build and apply prefect deployment') {
+            when {
+                buildingTag()
+            }
+            steps {
+                script {
+                    def flows = readYaml file: '.openshift/flows.yaml'
+                    for (flow in flows.flows) {
+                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE --apply")
+                    }                
                 }
             }
         }
