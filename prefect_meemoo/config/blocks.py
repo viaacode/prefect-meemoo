@@ -1,4 +1,5 @@
 import os
+from importlib.metadata import version
 
 import pendulum
 from dateutil import parser
@@ -33,7 +34,7 @@ class LastRunConfig(Block):
     try:
         _block_schema_capabilities = ["meemoo-prefect", "config", os.environ["BUILD_CONFIG_NAME"]]
     except KeyError:
-        _block_schema_capabilities = ["meemoo-prefect", "config"]
+        _block_schema_capabilities = ["meemoo-prefect", "config", version('prefect-meemoo')]
 
     def get_last_run(self, format: str = "%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""):
         if context:
