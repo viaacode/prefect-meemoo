@@ -2,9 +2,9 @@ import pendulum
 from prefect import flow, get_run_logger, task
 from prefect.runtime import deployment, flow_run
 
-from prefect_meemoo.config.last_run import (add_last_run_with_context,
-                                            get_last_run_config,
-                                            save_last_run_config)
+from .prefect_meemoo.config.last_run import (add_last_run_with_context,
+                                             get_last_run_config,
+                                             save_last_run_config)
 
 
 @flow(name="test_last_run_config",  on_completion=[save_last_run_config])
@@ -13,7 +13,7 @@ def main_flow():
 
     last_run = get_last_run_config()
     logger.info("last_run: ", last_run)
-    assert context_last_run != None
+    assert last_run != None
 
     context_last_run = get_last_run_config(context="context")
     logger.info("context_last_run: ", context_last_run)
