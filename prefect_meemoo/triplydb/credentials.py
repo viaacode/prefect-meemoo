@@ -1,3 +1,6 @@
+import os
+from importlib.metadata import version
+
 from prefect.blocks.core import Block, SecretStr
 from pydantic import Field
 
@@ -28,4 +31,7 @@ class TriplyDBCredentials(Block):
 
     host: str = Field(default=(...), description="TriplyDB HTTP host address.")
     gitlab_token: SecretStr = Field(default="", description="Gitlab token.")
-    _block_schema_capabilities = ["meemoo-prefect", "credentials"]
+    try:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", os.environ["BUILD_CONFIG_NAME"]]
+    except KeyError:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", "v"+ version('prefect-meemoo')]

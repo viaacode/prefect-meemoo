@@ -33,7 +33,7 @@ class ElasticsearchCredentials(Block):
     try:
         _block_schema_capabilities = ["meemoo-prefect", "credentials", os.environ["BUILD_CONFIG_NAME"]]
     except KeyError:
-        _block_schema_capabilities = ["meemoo-prefect", "credentials", version('prefect-meemoo')]
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", "v"+ version('prefect-meemoo')]
 
     def get_client(self) -> Elasticsearch:
         """
