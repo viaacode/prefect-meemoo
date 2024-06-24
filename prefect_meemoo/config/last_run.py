@@ -55,7 +55,7 @@ def add_last_run_with_context(context: str, time: pendulum.DateTime=None):
     last_run_config = _get_current_last_run_config(name)
     if not last_run_config:
         last_run_config: LastRunConfig = LastRunConfig(flow_name=flow_run.get_flow_name(), name=name)
-    last_run_config.add_last_run(context)
+    last_run_config.add_last_run(context, time)
 
 def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""):
     """
