@@ -1,12 +1,15 @@
+import os
+
 import pytest
 from prefect import flow
 from prefect.blocks.core import Block
 from rdflib import Graph
-from rdflib.compare import to_isomorphic, graph_diff
+from rdflib.compare import graph_diff, to_isomorphic
 
 from prefect_meemoo.triplydb.tasks import run_triplyetl
 
 
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def rdf_is_equal(expected, actual):
     g_expected = Graph().parse(data=expected)
     g_actual = Graph().parse(actual)
@@ -22,7 +25,7 @@ def rdf_is_equal(expected, actual):
 
     return iso_expected == iso_actual
 
-
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl():
     @flow(name="prefect_flow_triplyetl")
     def test_flow():
@@ -41,7 +44,7 @@ def test_run_triplyetl():
     assert result
     assert rdf_is_equal(expected, "./tests/etl/output/output.ttl")
 
-
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_add_block_as_variables():
     @flow(name="prefect_flow_triplyetl_block")
     def test_flow():
@@ -63,7 +66,7 @@ def test_add_block_as_variables():
     assert result
     assert rdf_is_equal(expected, "./tests/etl/output/output-block.ttl")
 
-
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_variables():
     @flow(name="prefect_flow_triplyetl_variables")
     def test_flow():
@@ -83,6 +86,7 @@ def test_run_triplyetl_with_variables():
     assert result
     assert rdf_is_equal(expected, "./tests/etl/output/output-variables.ttl")
 
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_none_variable():
     @flow(name="prefect_flow_triplyetl_none_variables")
     def test_flow():
@@ -102,6 +106,7 @@ def test_run_triplyetl_with_none_variable():
     assert result
     assert rdf_is_equal(expected, "./tests/etl/output/output-variables.ttl")
 
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_none_variable_assert():
     @flow(name="prefect_flow_triplyetl_none_variables_assert")
     def test_flow():
@@ -112,6 +117,7 @@ def test_run_triplyetl_with_none_variable_assert():
     with pytest.raises(Exception):
         test_flow()
 
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_error():
     @flow(name="prefect_flow_triplyetl_error")
     def test_flow():
@@ -120,7 +126,7 @@ def test_run_triplyetl_with_error():
     with pytest.raises(Exception):
         test_flow()
 
-
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_validate():
     @flow(name="prefect_flow_triplyetl_validate")
     def test_flow():
@@ -128,7 +134,7 @@ def test_run_triplyetl_with_validate():
 
     assert test_flow()
 
-
+@pytest.mark.skipif(os.environ.get('TRIPLYDB_GITLAB_TOKEN') is  None, reason="TRIPLYDB_GITLAB_TOKEN is not set")
 def test_run_triplyetl_with_validate_violation():
     @flow(name="prefect_flow_triplyetl_validate_violation")
     def test_flow():

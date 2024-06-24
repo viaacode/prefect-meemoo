@@ -1,0 +1,4 @@
+flows:
+  - filename: flow_test_last_run_block.py
+    function: main_flow
+    name: test-last-run-block

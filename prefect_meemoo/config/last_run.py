@@ -1,3 +1,4 @@
+import pendulum
 from prefect.runtime import deployment, flow_run
 from prefect.server.schemas.core import Flow, FlowRun
 
@@ -29,11 +30,34 @@ def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
         name = flow.name
     name += "-lastmodified"
     name = name.replace("_", "-")
-    last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name)
-    last_run_config.save(name=name, overwrite=True)
+    last_run_config = _get_current_last_run_config(name)
+    if not last_run_config:
+        last_run_config: LastRunConfig = LastRunConfig(flow_name=flow.name, name = name)
+    last_run_config.add_last_run(time=flow_run.start_time)
 
+def _get_current_last_run_config_name(name=None) -> str:
+    name = deployment.get_name()
+    if not name:
+        name = flow_run.get_flow_name()
+    name += "-lastmodified"
+    return name.replace("_", "-")
+    
+def _get_current_last_run_config(name=None) -> LastRunConfig: 
+    if not name:
+        name = _get_current_last_run_config_name()
+    try:
+        return LastRunConfig.load(name)
+    except ValueError as e:
+        return None
 
-def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ"):
+def add_last_run_with_context(context: str, time: pendulum.DateTime=None):
+    name = _get_current_last_run_config_name()
+    last_run_config = _get_current_last_run_config(name)
+    if not last_run_config:
+        last_run_config: LastRunConfig = LastRunConfig(flow_name=flow_run.get_flow_name(), name=name)
+    last_run_config.add_last_run(context, time)
+
+def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""):
     """
     Get the last run config for a flow.
     If the flow is run with the parameter `full_sync` and it is True, the last run config is ignored.
@@ -55,18 +79,12 @@ def get_last_run_config(format = "%Y-%m-%dT%H:%M:%S.%fZ"):
             logger.info(get_last_run_config())
         ```
     """
-    name = deployment.get_name()
-    if not name:
-        name = flow_run.get_flow_name()
-    name += "-lastmodified"
-    name = name.replace("_", "-")
     flow_run_parameters = flow_run.get_parameters()
     if "full_sync" in flow_run_parameters:
         if flow_run_parameters["full_sync"]:
             return None
-    try:
-        last_run_config: LastRunConfig = LastRunConfig.load(name)
-        return last_run_config.get_last_run(format)
-    except ValueError as e:
-        print(e)
+    last_run_config = _get_current_last_run_config()
+    if last_run_config:
+        return last_run_config.get_last_run(format, context)
+    else:
         return None
