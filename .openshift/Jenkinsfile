@@ -148,7 +148,7 @@ pipeline {
             }
             steps {
                 script {
-                    runInPrefectContainer("python tests/flows/infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry")
+                    runInPrefectContainer("python tests/flows/infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry --package_version ${BUILD_CONFIG_NAME}")
                 }
             }
         }
