@@ -10,7 +10,7 @@ def save_image(image_name, name, registry=None, package_version=None) -> None:
         image_registry=docker_registry,
         image_pull_policy="ALWAYS",
         env={
-            "BUILD_CONFIG_NAME": None
+            "BUILD_CONFIG_NAME": package_version
         }
     )
     docker_container.save(name=name, overwrite=True)
