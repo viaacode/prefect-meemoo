@@ -2,13 +2,16 @@ from prefect.infrastructure.docker import DockerContainer, DockerRegistry
 import argparse
 
 
-def save_image(image_name, name, registry=None) -> None:
+def save_image(image_name, name, registry=None, package_version=None) -> None:
     docker_registry = DockerRegistry.load(registry)
     docker_container = DockerContainer(
         image=image_name,
         auto_remove=True,
         image_registry=docker_registry,
         image_pull_policy="ALWAYS",
+        env={
+            "BUILD_CONFIG_NAME": None
+        }
     )
     docker_container.save(name=name, overwrite=True)
 
@@ -21,6 +24,11 @@ if __name__ == "__main__":
         "--registry",
         required=False,
         help="Docker registry (the block which it contains), default docker.io",
+    )
+    parser.add_argument(
+        "--package_version",
+        required=False,
+        help="The version of the prefect-meemoo package",
     )
     args = parser.parse_args()
     save_image(args.image, args.name, args.registry)
