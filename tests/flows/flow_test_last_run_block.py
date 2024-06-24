@@ -29,6 +29,7 @@ def main_flow():
     context_last_run_2 = get_last_run_config(context="context")
     logger.info(f"context_last_run_2: {context_last_run_2}")
     assert context_last_run_2 != None
+    assert context_last_run_2 > context_last_run
 
 
 
