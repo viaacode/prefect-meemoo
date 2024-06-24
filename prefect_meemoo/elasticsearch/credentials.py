@@ -1,3 +1,6 @@
+import os
+from importlib.metadata import version
+
 import urllib3
 from elasticsearch import Elasticsearch
 from prefect.blocks.core import Block, SecretStr
@@ -27,8 +30,10 @@ class ElasticsearchCredentials(Block):
     password: SecretStr = Field(default=(...), description="Elasticsearch password.")
     username: str = Field(default=(...), description="Elasticsearch username.")
     url: str = Field(default=(...), description="Elasticsearch URL.")
-
-    _block_schema_capabilities = ["meemoo-prefect", "credentials"]
+    try:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", os.environ["BUILD_CONFIG_NAME"]]
+    except KeyError:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", version('prefect-meemoo')]
 
     def get_client(self) -> Elasticsearch:
         """
