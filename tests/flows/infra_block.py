@@ -31,4 +31,4 @@ if __name__ == "__main__":
         help="The version of the prefect-meemoo package",
     )
     args = parser.parse_args()
-    save_image(args.image, args.name, args.registry)
+    save_image(args.image, args.name, args.registry, args.package_version)
