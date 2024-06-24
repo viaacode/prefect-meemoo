@@ -19,8 +19,8 @@ def main_flow():
     logger.info(f"context_last_run: {context_last_run}")
     assert context_last_run != None
 
-    context_last_run_2000 = get_last_run_config(context="context_2000")
-    logger.info(f"context_last_run_2000: ${context_last_run_2000}")
+    context_last_run_2000 = get_last_run_config(format="%Y-%m-%dT%H:%M:%SZ", context="context_2000")
+    logger.info(f"context_last_run_2000: {context_last_run_2000}")
     assert context_last_run_2000 == pendulum.datetime(2000, 1, 1, 10).to_iso8601_string()
 
     add_last_run_with_context("context")
