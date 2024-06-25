@@ -1,3 +1,6 @@
+import os
+from importlib.metadata import version
+
 from mediahaven import MediaHaven
 from mediahaven.oauth2 import ROPCGrant
 from prefect.blocks.core import Block, SecretStr
@@ -34,7 +37,10 @@ class MediahavenCredentials(Block):
     username: str = Field(default=(...), description="Mediahaven API username.")
     url: str = Field(default=(...), description="Mediahaven API URL.")
 
-    _block_schema_capabilities = ["meemoo-prefect", "credentials"]
+    try:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", os.environ["BUILD_CONFIG_NAME"]]
+    except KeyError:
+        _block_schema_capabilities = ["meemoo-prefect", "credentials", "v"+ version('prefect-meemoo')]
 
     def get_client(self) -> MediaHaven:
         """

@@ -25,7 +25,7 @@ pipeline {
                     env.IMAGE_TAG = sh(script: 'git describe --tags || echo latest', returnStdout: true)
                     // The name used for the build config based on the image tag
                     // Replace '.' with '_' as '.' is not allowed.
-                    env.BUILD_CONFIG_NAME = sh(script: 'echo "${IMAGE_TAG}" | tr -d \'\\n\'', returnStdout: true)
+                    env.BUILD_CONFIG_NAME = sh(script: 'echo "${IMAGE_TAG}" | tr -d \'\\n\' | sed -r "s/\\-//g"', returnStdout: true)
                     env.DOCKER_IMAGE = sh(script: 'echo "${APP_NAME}:${GIT_SHORT_COMMIT}"')
                 }
             }
@@ -148,7 +148,7 @@ pipeline {
             }
             steps {
                 script {
-                    runInPrefectContainer("python tests/flows/infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry")
+                    runInPrefectContainer("python tests/flows/infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry --package_version ${BUILD_CONFIG_NAME}")
                 }
             }
         }
@@ -160,7 +160,7 @@ pipeline {
                 script {
                     def flows = readYaml file: '.openshift/flows.yaml'
                     for (flow in flows.flows) {
-                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE --apply")
+                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE -t ${BUILD_CONFIG_NAME} --apply")
                     }                
                 }
             }

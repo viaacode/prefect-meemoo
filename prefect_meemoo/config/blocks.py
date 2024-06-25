@@ -1,3 +1,6 @@
+import os
+from importlib.metadata import version
+
 import pendulum
 from dateutil import parser
 from prefect.blocks.core import Block, SecretStr
@@ -28,7 +31,10 @@ class LastRunConfig(Block):
     last_run_dict: dict = Field({}, description="Dictionary containing dates based on a certain value for a flow.")
     flow_name: str = Field(default=(...), description="The name of the flow.")
     name: str = Field(default=(...), description="The name of the deployment.")
-    _block_schema_capabilities = ["meemoo-prefect", "config"]
+    try:
+        _block_schema_capabilities = ["meemoo-prefect", "config", os.environ["BUILD_CONFIG_NAME"]]
+    except KeyError:
+        _block_schema_capabilities = ["meemoo-prefect", "config", "v"+ version('prefect-meemoo')]
 
     def get_last_run(self, format: str = "%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""):
         if context:

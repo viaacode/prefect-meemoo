@@ -2,7 +2,7 @@ import pendulum
 from prefect import flow, get_run_logger, task
 from prefect.runtime import deployment, flow_run
 
-from .prefect_meemoo.config.last_run import (add_last_run_with_context,
+from prefect_meemoo.config.last_run import (add_last_run_with_context,
                                              get_last_run_config,
                                              save_last_run_config)
 
