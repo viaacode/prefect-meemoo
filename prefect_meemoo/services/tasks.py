@@ -31,7 +31,7 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
     """
     logger = get_run_logger()
     if last_modified:
-        logger.info(f"Start (api_server){api_route} since {last_modified}")
+        logger.info(f"Start {api_server}{api_route} since {last_modified}")
         payload = {
             "full_sync": False,
             # we don't actually need a date here, full sync false is ok
@@ -55,7 +55,17 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
         running = True
         while running:
             res = requests.get(f"{api_server}{api_route}")
-            running = res.json()["job_running"]
+            if not res.ok:
+                logger.error(f"{api_server}{api_route} poll request failed: {res.text}")
+                return Failed()
+
+            json_result = res.json()
+
+            if "job_running" not in json_result:
+                logger.error(f"{api_server}{api_route} 'job_running' parameter not found in poll response. Result JSON: {json_result}")
+                return Failed()
+
+            running = json_result["job_running"]
             # https://github.com/PrefectHQ/prefect/issues/5635
             # import subprocess
             # subprocess.Popen("prefect flow-run ls >/dev/null", shell=True)
