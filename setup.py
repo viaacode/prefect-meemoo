@@ -33,6 +33,9 @@ with open("requirements-triplydb.txt") as triplydb_requires_file:
 with open("requirements-services.txt") as services_requires_file:
     services_requires = services_requires_file.read().strip().split("\n")
 
+with open("requirements-ssh.txt") as ssh_requires_file:
+    ssh_requires = ssh_requires_file.read().strip().split("\n")
+
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
@@ -58,6 +61,6 @@ setup(
         "elasticsearch": elasticsearch_requires,
         "triplydb": triplydb_requires,
         "services": services_requires,
+        "ssh": ssh_requires,
     },
 )
-
