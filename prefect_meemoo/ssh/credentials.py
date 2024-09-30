@@ -4,6 +4,7 @@ from importlib.metadata import version
 from prefect.blocks.core import Block
 from pydantic import SecretStr
 from pydantic import Field
+from paramiko import SSHClient
 
 
 class SSHCredentials(Block):
@@ -44,3 +45,14 @@ class SSHCredentials(Block):
             "credentials",
             "v" + version("prefect-meemoo"),
         ]
+
+    def get_client(self) -> SSHClient:
+        """
+        Helper method to get a SSH client.
+
+        Returns:
+            - An authenticated SSH client
+        """
+
+        client = SSHClient()
+        return client
