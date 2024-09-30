@@ -2,6 +2,7 @@ import os
 from importlib.metadata import version
 
 from prefect.blocks.core import Block
+from prefect import get_run_logger
 from pydantic import SecretStr
 from pydantic import Field
 from paramiko import SSHClient
@@ -48,11 +49,22 @@ class SSHCredentials(Block):
 
     def get_client(self) -> SSHClient:
         """
-        Helper method to get a SSH client.
+        Helper method to get a SSH client and establish a connection.
 
         Returns:
-            - An authenticated SSH client
+            - A connected SSH client
         """
 
         client = SSHClient()
+        client.load_system_host_keys()
+        try:
+            client.connect(
+                hostname=self.hostname,
+                username=self.user,
+                password=self.password.get_secret_value(),
+            )
+        except:
+            logger = get_run_logger()
+            logger.error(f"Could establish SSH connection to {self.hostname}")
+            exit()
         return client
