@@ -11,7 +11,7 @@ Documentation for each subpackage can be found in [the documentation folder.](./
 ## DEV Guidelines
 
 ### Package Structure
-The [prefect_meemoo](./prefect_meemoo/) folder contains subfolders for each subpackage. Corresponding to these, a `requirements-{package-name}.txt` file must be added in the root folder. In [setup.py](setup.py), these files' requirements must be imported and added to the `extras_require` argument of setup.
+The [prefect_meemoo](./prefect_meemoo/) folder contains subfolders for each subpackage. Corresponding to these, a `requirements-{package-name}.txt` file must be added in the root folder. In [setup.py](setup.py), these requirement files must be imported and added to the `extras_require` argument of setup.
 
 ### Generating Documentation
 Run the `handsdown` command in the root folder after installing the dev dependencies.
