@@ -84,7 +84,7 @@ def run_javascript(
 
 
 def run_terminal(
-    command: str,
+    command,
     cwd: str = os.getcwd(),
     base_path=os.getcwd(),
     on_error=None,
