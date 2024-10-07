@@ -2,7 +2,6 @@ import json
 import os
 import re
 import subprocess
-import time
 from collections import deque
 
 from prefect import get_run_logger, task
@@ -16,25 +15,90 @@ from prefect.states import Failed
 #     """
 #     return
 
+
 @task(
     name="Run TriplyETL",
     description="Runs an TriplyETL script.",
     task_run_name="{task_run_name}",
 )
 def run_triplyetl(
-    etl_script_path: str, task_run_name: str = "Run TriplyETL", base_path = os.getcwd(), n_lines_after_fail=30, **kwargs
+    etl_script_path: str,
+    task_run_name: str = "Run TriplyETL",
+    base_path=os.getcwd(),
+    n_lines_after_fail=30,
+    **kwargs,
 ):
     logger = get_run_logger()
     # Resolve absolute path of TriplyETL script
     etl_script_abspath = os.path.abspath(etl_script_path)
     logger.info("Running TriplyETL script: " + str(etl_script_abspath))
 
+    def on_error():
+        try:
+            with open(base_path + "lib/etl.err") as f:
+                error_message = f.read()
+                create_markdown_artifact(
+                    error_message,
+                    key="etl-err",
+                    description=f"TriplyETL Error: {etl_script_path}",
+                )
+        except FileNotFoundError:
+            logger.info("File not found: " + base_path + "lib/etl.err")
+
+    run_terminal(
+        command=["npx", "etl", str(etl_script_abspath), "--plain"],
+        cwd=os.path.dirname(etl_script_abspath),
+        task_run_name=task_run_name,
+        base_path=base_path,
+        n_lines_after_fail=n_lines_after_fail,
+        kwargs=kwargs,
+        on_error=on_error,
+    )
+
+
+@task(
+    name="Run JavaScript",
+    description="Runs an JavaScript script with NodeJS.",
+    task_run_name="{task_run_name}",
+)
+def run_javascript(
+    script_path: str,
+    task_run_name: str = "Run JavaScript",
+    base_path=os.getcwd(),
+    n_lines_after_fail=30,
+    **kwargs,
+):
+    logger = get_run_logger()
+    # Resolve absolute path of script
+    etl_script_abspath = os.path.abspath(script_path)
+    logger.info("Running JS script: " + str(etl_script_abspath))
+
+    run_terminal(
+        command=["node", str(etl_script_abspath)],
+        cwd=os.path.dirname(etl_script_abspath),
+        task_run_name=task_run_name,
+        base_path=base_path,
+        n_lines_after_fail=n_lines_after_fail,
+        kwargs=kwargs,
+    )
+
+
+def run_terminal(
+    command,
+    cwd: str = os.getcwd(),
+    base_path=os.getcwd(),
+    on_error=None,
+    n_lines_after_fail=30,
+    **kwargs,
+):
+    logger = get_run_logger()
+
     # Create an environment for subprocess
     etl_env = os.environ.copy()
     etl_env["BASE_PATH"] = base_path
 
-    # 
-    log_queue = deque(maxlen = n_lines_after_fail)
+    #
+    log_queue = deque(maxlen=n_lines_after_fail)
 
     for key, value in kwargs.items():
         # If a prefect block is given, make members available in ENV
@@ -52,8 +116,8 @@ def run_triplyetl(
             etl_env[key.upper()] = str(value)
 
     p = subprocess.Popen(
-        ["npx", "etl", str(etl_script_abspath), "--plain"],
-        cwd=os.path.dirname(etl_script_abspath),
+        command,
+        cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
@@ -63,7 +127,6 @@ def run_triplyetl(
 
     record_message = False
     message = ""
-    error = False
 
     # Parse CLI output from TriplyETL for logging
     while True:
@@ -80,7 +143,7 @@ def run_triplyetl(
             if record_message:
                 logger.error(message)
             break
-        
+
         if "PREFECT" in line:
             log_statement = json.loads(line)["PREFECT"]
             if log_statement["level"] == "DEBUG":
@@ -100,22 +163,13 @@ def run_triplyetl(
         if record_message:
             message += line
 
-
     # Read final returncode
     rc = p.poll()
     logger.info("rc: " + str(rc))
     if rc > 0:
-        logger.error('\n'.join(log_queue))
-        try:
-            with open(base_path + "lib/etl.err") as f:
-                error_message = f.read()
-                create_markdown_artifact(
-                    error_message,
-                    key="etl-err",
-                    description=f"TriplyETL Error: {etl_script_path}",
-                )
-        except FileNotFoundError:
-            logger.info("File not found: " + base_path + "lib/etl.err")
+        logger.error("\n".join(log_queue))
+        if on_error:
+            on_error()
         return Failed()
 
     return rc > 0
