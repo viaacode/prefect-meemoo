@@ -45,7 +45,7 @@ def run_triplyetl(
         except FileNotFoundError:
             logger.info("File not found: " + base_path + "lib/etl.err")
 
-    run_terminal(
+    return run_terminal(
         command=["npx", "etl", str(etl_script_abspath), "--plain"],
         cwd=os.path.dirname(etl_script_abspath),
         task_run_name=task_run_name,
@@ -73,7 +73,7 @@ def run_javascript(
     etl_script_abspath = os.path.abspath(script_path)
     logger.info("Running JS script: " + str(etl_script_abspath))
 
-    run_terminal(
+    return run_terminal(
         command=["node", str(etl_script_abspath)],
         cwd=os.path.dirname(etl_script_abspath),
         task_run_name=task_run_name,
