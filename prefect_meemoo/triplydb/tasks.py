@@ -51,8 +51,8 @@ def run_triplyetl(
         task_run_name=task_run_name,
         base_path=base_path,
         n_lines_after_fail=n_lines_after_fail,
-        kwargs=kwargs,
         on_error=on_error,
+        **kwargs,
     )
 
 
@@ -79,7 +79,7 @@ def run_javascript(
         task_run_name=task_run_name,
         base_path=base_path,
         n_lines_after_fail=n_lines_after_fail,
-        kwargs=kwargs,
+        **kwargs,
     )
 
 
