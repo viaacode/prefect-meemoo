@@ -145,20 +145,24 @@ def run_terminal(
             break
 
         if "PREFECT" in line:
-            log_statement = json.loads(line)["PREFECT"]
-            if log_statement["level"] == "DEBUG":
-                logger.debug(log_statement)
-            elif log_statement["level"] == "INFO":
-                try:
-                    if log_statement["message"] == "error":
-                        record_message = True
-                except KeyError:
-                    pass
-                logger.info(log_statement)
-            elif log_statement["level"] == "WARNING":
-                logger.warning(log_statement)
-            elif log_statement["level"] == "ERROR":
-                logger.error(log_statement)
+            try:
+                log_statement = json.loads(line)["PREFECT"]
+                if log_statement["level"] == "DEBUG":
+                    logger.debug(log_statement)
+                elif log_statement["level"] == "INFO":
+                    try:
+                        if log_statement["message"] == "error":
+                            record_message = True
+                    except KeyError:
+                        pass
+                    logger.info(log_statement)
+                elif log_statement["level"] == "WARNING":
+                    logger.warning(log_statement)
+                elif log_statement["level"] == "ERROR":
+                    logger.error(log_statement)
+            except json.JSONDecodeError:
+                # Print line to debug if not valid JSON
+                logger.debug(line)
 
         if record_message:
             message += line
