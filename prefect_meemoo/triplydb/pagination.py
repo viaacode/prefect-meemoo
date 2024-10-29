@@ -1,7 +1,7 @@
 import requests
 from requests import Response
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Union
 from itertools import islice
 import re
 
@@ -185,7 +185,7 @@ def request_triply_post(endpoint: str, body: str, triplydb_block_name: str) -> R
 
 
 def get_triply_headers(
-    bearer_token: str, extra_headers: dict[str, str] | None = None
+    bearer_token: str, extra_headers: Union[dict[str, str], None] = None
 ) -> dict[str, str]:
     headers = {
         "Authorization": f"Bearer {bearer_token}",
