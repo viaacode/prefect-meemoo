@@ -32,6 +32,8 @@ def run_saved_query(
 
     One caveat with the `offset` parameter is that all results up to #`offset + limit` are fetched from the triple store,
     including the first #`offset` results which are discarded afterwards.
+
+    Use a negative `limit` to fetch all results.
     """
 
     logger = get_run_logger()
@@ -43,7 +45,11 @@ def run_saved_query(
         logger.warning(uri)
         return request_triply_get(uri, triplydb_block_name)
 
-    return islice(_run_query(send_request), offset, offset + limit)
+    results = _run_query(send_request)
+    if limit < 0:
+        return results
+
+    return islice(results, offset, offset + limit)
 
 
 def run_sparql(
@@ -67,6 +73,8 @@ def run_sparql(
 
     One caveat with the `offset` parameter is that all results up to #`offset + limit` are fetched from the triple store,
     including the first #`offset` results which are discarded afterwards.
+
+    Use a negative `limit` to fetch all results.
     """
     logger = get_run_logger()
 
@@ -88,7 +96,11 @@ def run_sparql(
         paginated_sparql = sparql + f"LIMIT {PAGE_SIZE}\nOFFSET {page * PAGE_SIZE}"
         return request_triply_post(endpoint, paginated_sparql, triplydb_block_name)
 
-    return islice(_run_query(send_request), offset, limit + offset)
+    results = _run_query(send_request)
+    if limit < 0:
+        return results
+
+    return islice(results, offset, offset + limit)
 
 
 def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
