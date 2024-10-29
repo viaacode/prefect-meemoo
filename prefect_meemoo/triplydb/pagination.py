@@ -42,7 +42,6 @@ def run_saved_query(
         uri = add_params_to_uri(
             saved_query_uri, {"page": page + 1, "pageSize": PAGE_SIZE}
         )
-        logger.warning(uri)
         return request_triply_get(uri, triplydb_block_name)
 
     results = _run_query(send_request)
