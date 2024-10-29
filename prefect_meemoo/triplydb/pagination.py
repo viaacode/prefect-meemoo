@@ -121,6 +121,8 @@ def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
 
         # Yield the items one by one
         json = response.json()
+        logger.info(f"Fetched {len(json)} results.")
+
         for item in json:
             yield item
 
