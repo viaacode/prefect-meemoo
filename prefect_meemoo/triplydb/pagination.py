@@ -74,14 +74,14 @@ def run_sparql(
     match = re.search(r"(?<!\w)offset\s*", sparql, flags=re.MULTILINE + re.IGNORECASE)
     if match is not None:
         raise Exception(
-            "The SPARQL query inside run_sparql must not contain an OFFSET clause"
+            "The SPARQL query given to run_sparql must not contain an OFFSET clause"
         )
 
     # Check for `LIMIT` clause
     match = re.search(rf"(?<!\w)limit\s*", sparql, flags=re.MULTILINE + re.IGNORECASE)
     if match is not None:
         raise Exception(
-            "The SPARQL query inside run_sparql must not contain an LIMIT clause"
+            "The SPARQL query given to run_sparql must not contain an LIMIT clause"
         )
 
     def send_request(page: int) -> Response:
