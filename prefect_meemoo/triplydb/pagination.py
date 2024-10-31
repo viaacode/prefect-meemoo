@@ -152,8 +152,7 @@ def request_triply_get(endpoint: str, triplydb_block_name: str) -> Response:
     response = requests.get(endpoint, headers=headers)
 
     if response.status_code != 200:
-        logger.error(f"Status code {response.status_code} - {response.reason}")
-        raise Exception("Request did not return status code 200")
+        raise Exception(f"Status code {response.status_code} - {response.reason}")
     return response
 
 
