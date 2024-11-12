@@ -60,11 +60,13 @@ class SSHCredentials(Block):
         try:
             client.connect(
                 hostname=self.hostname,
+                port=self.port,
                 username=self.user,
                 password=self.password.get_secret_value(),
             )
-        except:
+        except Exception as e:
             logger = get_run_logger()
-            logger.error(f"Could establish SSH connection to {self.hostname}")
-            exit()
+            logger.error(f"Could not establish SSH connection to {self.hostname}")
+            logger.error(e)
+            raise e
         return client
