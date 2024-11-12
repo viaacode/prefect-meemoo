@@ -65,6 +65,6 @@ class SSHCredentials(Block):
             )
         except:
             logger = get_run_logger()
-            logger.error(f"Could establish SSH connection to {self.hostname}")
+            logger.error(f"Could not establish SSH connection to {self.hostname}")
             exit()
         return client
