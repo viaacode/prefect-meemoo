@@ -38,6 +38,7 @@ def run_saved_query(
     """
 
     logger = get_run_logger()
+    logger.info("Starting saved query execution")
 
     def send_request(page: int):
         uri = add_params_to_uri(
@@ -111,6 +112,7 @@ def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
     logger = get_run_logger()
     page = 0
     prev = None
+    items = []
 
     while True:
         # Create and send the query
@@ -125,7 +127,8 @@ def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
         logger.info(f"Fetched {len(json)} results.")
 
         for item in json:
-            yield item
+            # yield item
+            items.append(item)
 
         if len(json) < PAGE_SIZE:
             logger.info(
@@ -135,6 +138,7 @@ def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
 
         prev = response.text
         page += 1
+    return items
 
 
 @task
