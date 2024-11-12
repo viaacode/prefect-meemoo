@@ -5,14 +5,14 @@ from typing import Any, Callable, Iterable, Union
 from itertools import islice
 import re
 
-from prefect import task, get_run_logger
+from prefect import flow, task, get_run_logger
 
 from .credentials import TriplyDBCredentials
 
 PAGE_SIZE = 10_000
 
 
-@task()
+@flow(name="Run a Triply saved query with pagination")
 def run_saved_query(
     saved_query_uri: str,
     triplydb_block_name: str,
@@ -52,7 +52,7 @@ def run_saved_query(
     return [r for r in islice(results, offset, offset + limit)]
 
 
-@task()
+@flow(name="Run a sparql SELECT with pagination")
 def run_sparql_select(
     endpoint: str,
     sparql: str,
@@ -158,7 +158,7 @@ def request_triply_get(endpoint: str, triplydb_block_name: str) -> Response:
     return response
 
 
-@task
+@task()
 def request_triply_post(endpoint: str, body: str, triplydb_block_name: str) -> Response:
     """
     Send a POST request including the triply token to the given endpoint.
