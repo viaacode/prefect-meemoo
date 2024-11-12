@@ -12,6 +12,7 @@ from .credentials import TriplyDBCredentials
 PAGE_SIZE = 10_000
 
 
+@task()
 def run_saved_query(
     saved_query_uri: str,
     triplydb_block_name: str,
@@ -48,10 +49,11 @@ def run_saved_query(
     if limit < 0:
         return results
 
-    return islice(results, offset, offset + limit)
+    return [r for r in islice(results, offset, offset + limit)]
 
 
-def run_sparql(
+@task()
+def run_sparql_select(
     endpoint: str,
     sparql: str,
     triplydb_block_name: str,
@@ -59,13 +61,13 @@ def run_sparql(
     offset: int = 0,
 ) -> Iterable:
     """
-    Execute a sparql query using the given endpoint.
+    Execute a sparql SELECT query using the given endpoint.
 
     Unlike a simple POST request to a tripple store, this function takes care of pagination. Requires prefect.
     Results are yielded back as an Iterable. This means that only part of the results are kept in memory at any given time.
 
     ```py
-    results = run_sparql(...)
+    results = run_sparql_select(...)
     for r in results:
         ...
     ```
@@ -99,7 +101,7 @@ def run_sparql(
     if limit < 0:
         return results
 
-    return islice(results, offset, offset + limit)
+    return [r for r in islice(results, offset, offset + limit)]
 
 
 def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
