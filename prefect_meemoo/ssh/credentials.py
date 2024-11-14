@@ -5,6 +5,7 @@ from prefect.blocks.core import Block
 from prefect import get_run_logger
 from pydantic import SecretStr
 from pydantic import Field
+import paramiko
 from paramiko import SSHClient
 
 
@@ -56,6 +57,7 @@ class SSHCredentials(Block):
         """
 
         client = SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.load_system_host_keys()
         try:
             client.connect(
