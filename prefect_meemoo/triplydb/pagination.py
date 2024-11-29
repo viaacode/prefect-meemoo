@@ -45,6 +45,7 @@ def run_sparql_select(
     endpoint: str,
     sparql_template_list: Union[list[str], str],
     triplydb_block_name: str,
+    offset_start: int = 0,
 ) -> list[dict[str, Any]]:
     """
     Prefect flow that sends the given queries to the endpoint with automatic pagination.
@@ -60,7 +61,7 @@ def run_sparql_select(
         if "OFFSET 0" not in sparql_template:
             raise Exception("Missing OFFSET in SPARQL query template")
 
-        offset = 0
+        offset = offset_start
         while True:
             paginated_query = sparql_template.replace("OFFSET 0", f"OFFSET {offset}")
             response = request_triply_post(
