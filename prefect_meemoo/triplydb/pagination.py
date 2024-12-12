@@ -76,6 +76,8 @@ def run_sparql_select(
 
             if len(json) < PAGE_SIZE:
                 break
+
+    logger.info(f"Done running SPARQL select - got a total of {len(results)} results")
     return results
 
 
