@@ -56,7 +56,7 @@ class SSHCredentials(Block):
         """
 
         client = SSHClient()
-        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
             client.connect(
                 hostname=self.hostname,
