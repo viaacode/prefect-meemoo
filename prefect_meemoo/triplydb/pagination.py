@@ -15,28 +15,34 @@ PAGE_SIZE = 10_000
 def run_saved_query(
     saved_query_uri: str,
     triplydb_block_name: str,
+    variables_list: Union[list[dict[str, str]], dict[str,str]],
 ) -> list[dict[str, Any]]:
     """
     A Prefect flow that executes a saved query with automatic pagination.
     """
 
     logger = get_run_logger()
+    variables_list = cast_to_list(variables_list)
+    
     results = []
-    page = 0
-    while True:
-        params = {"page": page + 1, "pageSize": PAGE_SIZE}
-        uri = add_params_to_uri(saved_query_uri, params)
-        response = request_triply_get(uri, triplydb_block_name)
+    for vars in variables_list:
+        page = 0
+        while True:
+            params = {"page": page + 1, "pageSize": PAGE_SIZE}
+            uri = add_params_to_uri(saved_query_uri, vars | params)
+            response = request_triply_get(uri, triplydb_block_name)
 
-        json = response.json()
-        logger.info(
-            f"Query page {page}, pageSize {PAGE_SIZE} - got {len(json)} results"
-        )
-        results += json
-        page += 1
+            json = response.json()
+            logger.info(
+                f"Saved Query with vars {vars | params}, pageSize {PAGE_SIZE} - got {len(json)} results"
+            )
+            results += json
+            page += 1
 
-        if len(json) < PAGE_SIZE:
-            break
+            if len(json) < PAGE_SIZE:
+                break
+
+    logger.info(f"Done with saved queries - got {len(results)} results")
     return results
 
 
@@ -53,7 +59,7 @@ def run_sparql_select(
     """
 
     logger = get_run_logger()
-    sparql_template_list = cast_list(sparql_template_list)
+    sparql_template_list = cast_to_list(sparql_template_list)
     results = []
     for sparql_template in sparql_template_list:
         logger.info("Start of next query execution")
@@ -81,10 +87,10 @@ def run_sparql_select(
     return results
 
 
-def cast_list(list_or_str: Union[list[str], str]) -> list[str]:
-    if type(list_or_str) is str:
-        list_or_str = [list_or_str]
-    return typing.cast(list[str], list_or_str)
+def cast_to_list(list_or_any: Union[list[Any], Any]) -> list[Any]:
+    if type(list_or_any) is not list:
+        list_or_any = [list_or_any]
+    return typing.cast(list[Any], list_or_any)
 
 
 @task
