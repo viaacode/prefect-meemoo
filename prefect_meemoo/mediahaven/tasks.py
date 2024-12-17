@@ -1,15 +1,12 @@
 import json
-import time
 from typing import List
 
 from mediahaven import MediaHaven
-from mediahaven.mediahaven import MediaHavenException
 from mediahaven.oauth2 import RequestTokenError
 from mediahaven.resources.base_resource import MediaHavenPageObject
 from mergedeep import merge
 from prefect import flow, get_run_logger, task
 from prefect.blocks.system import JSON
-from prefect.filesystems import LocalFileSystem
 
 from prefect_meemoo.mediahaven.credentials import MediahavenCredentials
 
@@ -179,18 +176,25 @@ def search_records(
             query += f" +(LastModifiedDate:{last_modified_date})"
         else:
             query += f' +(LastModifiedDate:[{last_modified_date} TO *])'
+    log_record= {
+        "query": query,
+        "start_index": start_index,
+        "nr_of_results": nr_of_results,
+        "sort": sort
+    }
     try:
         records_page = client.records.search(q=query, nrOfResults=nr_of_results, startIndex=start_index, sort=sort)
-        logger.info(
-            f"""{{"query": "{query}", "last_modified_date": {last_modified_date}, "start_index": {start_index}, "nr_of_results": {nr_of_results}, "sort": {sort}, "outcome_status": "SUCCESS"}}"""
-        )
-        logger.info("TotalNrOfResults: " + str(records_page.page_result.TotalNrOfResults))
-        return records_page
     except Exception as error:
-        logger.error(
-            f"""{{ "outcome_status": "FAIL", "status_message": {error}}}"""
-        )
+        log_record["outcome_status"] = "FAIL"
+        log_record["status_message"] = error
+        logger.error(log_record)
         raise error
+    else:
+        logger.info({"TotalNrOfResults" : str(records_page.page_result.TotalNrOfResults)})
+        log_record["outcome_status"] = "SUCCESS"
+        logger.info(log_record)
+        return records_page
+
 
 @task(name="Generate record json")
 def generate_record_json(client : MediaHaven, field_flat_key : str, value, merge_strategy : str = None) -> dict:
