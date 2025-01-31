@@ -1,2 +1,1 @@
 elasticsearch
-pydantic==1.10.8
