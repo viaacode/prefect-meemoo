@@ -13,3 +13,4 @@ mkdocs-gen-files
 interrogate
 coverage
 handsdown
+pydantic==1.10.8

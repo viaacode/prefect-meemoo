@@ -4,3 +4,4 @@ pyshacl==0.20.0
 rdflib>=6.2.0
 ijson==3.1.4
 pandas==1.5.2
+pydantic==1.10.8
