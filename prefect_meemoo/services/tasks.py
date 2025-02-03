@@ -33,13 +33,13 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
     if last_modified:
         logger.info(f"Start (api_server){api_route} since {last_modified}")
         payload = {
-            "full_sync": False,
+            "full_sync": "False",
             # we don't actually need a date here, full sync false is ok
             # 'modified_since': f"{last_modified}T00:00:00"
         }
     else:
         logger.info(f"Start full sync on {api_server}{api_route}")
-        payload = {"full_sync": True}
+        payload = {"full_sync": "True"}
 
     try:
         res = requests.post(
