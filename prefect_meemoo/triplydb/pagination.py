@@ -1,9 +1,8 @@
 import requests
 from requests import Response
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-from typing import Any, Callable, Iterable, Union
-from itertools import islice
-import re
+from urllib.parse import urlencode
+from typing import Any, Union, Optional
+import typing
 
 from prefect import flow, task, get_run_logger
 
@@ -12,137 +11,94 @@ from .credentials import TriplyDBCredentials
 PAGE_SIZE = 10_000
 
 
-@flow(name="Run a Triply saved query with pagination")
+@flow
 def run_saved_query(
     saved_query_uri: str,
     triplydb_block_name: str,
-    limit: int = 10_000,
-    offset: int = 0,
-) -> Iterable:
+    variables_list: Union[list[dict[str, str]], dict[str,str]],
+) -> list[dict[str, Any]]:
     """
-    Execute a saved query.
-
-    Unlike a simple GET request to a saved query endpoint, this function takes care of pagination. Requires prefect.
-    Results are yielded back as an Iterable. This means that only part of the results are kept in memory at any given time.
-
-    ```py
-    results = run_saved_query(...)
-    for r in results:
-        ...
-    ```
-
-    One caveat with the `offset` parameter is that all results up to #`offset + limit` are fetched from the triple store,
-    including the first #`offset` results which are discarded afterwards.
-
-    Use a negative `limit` to fetch all results.
+    A Prefect flow that executes a saved query with automatic pagination.
     """
 
     logger = get_run_logger()
-    logger.info("Starting saved query execution")
+    variables_list = cast_to_list(variables_list)
+    
+    results = []
+    for vars in variables_list:
+        page = 0
+        while True:
+            params = {"page": page + 1, "pageSize": PAGE_SIZE}
+            uri = add_params_to_uri(saved_query_uri, vars | params)
+            response = request_triply_get(uri, triplydb_block_name)
 
-    def send_request(page: int):
-        uri = add_params_to_uri(
-            saved_query_uri, {"page": page + 1, "pageSize": PAGE_SIZE}
-        )
-        return request_triply_get(uri, triplydb_block_name)
+            json = response.json()
+            logger.info(
+                f"Saved Query with vars {vars | params}, pageSize {PAGE_SIZE} - got {len(json)} results"
+            )
+            results += json
+            page += 1
 
-    results = _run_query(send_request)
-    if limit < 0:
-        return results
+            if len(json) < PAGE_SIZE:
+                break
 
-    return [r for r in islice(results, offset, offset + limit)]
+    logger.info(f"Done with saved queries - got {len(results)} results")
+    return results
 
 
-@flow(name="Run a sparql SELECT with pagination")
+@flow
 def run_sparql_select(
     endpoint: str,
-    sparql: str,
+    sparql_template_list: Union[list[str], str],
     triplydb_block_name: str,
-    limit: int = 10_000,
-    offset: int = 0,
-) -> Iterable:
+) -> list[dict[str, Any]]:
     """
-    Execute a sparql SELECT query using the given endpoint.
+    Prefect flow that sends the given queries to the endpoint with automatic pagination.
 
-    Unlike a simple POST request to a tripple store, this function takes care of pagination. Requires prefect.
-    Results are yielded back as an Iterable. This means that only part of the results are kept in memory at any given time.
-
-    ```py
-    results = run_sparql_select(...)
-    for r in results:
-        ...
-    ```
-
-    One caveat with the `offset` parameter is that all results up to #`offset + limit` are fetched from the triple store,
-    including the first #`offset` results which are discarded afterwards.
-
-    Use a negative `limit` to fetch all results.
+    The queries should contain a "OFFSET 0" marker that is used for pagination.
     """
+
     logger = get_run_logger()
+    sparql_template_list = cast_to_list(sparql_template_list)
+    results = []
+    for sparql_template in sparql_template_list:
+        logger.info("Start of next query execution")
+        if "OFFSET 0" not in sparql_template:
+            raise Exception("Missing OFFSET in SPARQL query template")
 
-    # Check for `OFFSET` clause
-    match = re.search(r"(?<!\w)offset\s*", sparql, flags=re.MULTILINE + re.IGNORECASE)
-    if match is not None:
-        raise Exception(
-            "The SPARQL query given to run_sparql must not contain an OFFSET clause"
-        )
-
-    # Check for `LIMIT` clause
-    match = re.search(rf"(?<!\w)limit\s*", sparql, flags=re.MULTILINE + re.IGNORECASE)
-    if match is not None:
-        raise Exception(
-            "The SPARQL query given to run_sparql must not contain an LIMIT clause"
-        )
-
-    def send_request(page: int) -> Response:
-        paginated_sparql = sparql + f"LIMIT {PAGE_SIZE}\nOFFSET {page * PAGE_SIZE}"
-        return request_triply_post(endpoint, paginated_sparql, triplydb_block_name)
-
-    results = _run_query(send_request)
-    if limit < 0:
-        return results
-
-    return [r for r in islice(results, offset, offset + limit)]
-
-
-def _run_query(send_request_fn: Callable[[int], Response]) -> Iterable:
-    """
-    Common logic for the `run_saved_query` and `run_sparql` functions
-    """
-    logger = get_run_logger()
-    page = 0
-    prev = None
-    items = []
-
-    while True:
-        # Create and send the query
-        response = send_request_fn(page)
-
-        if response.text == prev:
-            logger.info("Got duplicate results back, indicating the end of the dataset")
-            break
-
-        # Yield the items one by one
-        json = response.json()
-        logger.info(f"Fetched {len(json)} results.")
-
-        for item in json:
-            # yield item
-            items.append(item)
-
-        if len(json) < PAGE_SIZE:
-            logger.info(
-                f"Got less results than PAGE_SIZE {PAGE_SIZE}, indicating of the end of the dataset"
+        offset = 0
+        while True:
+            paginated_query = sparql_template.replace("OFFSET 0", f"OFFSET {offset}")
+            response = request_triply_post(
+                endpoint, paginated_query, triplydb_block_name
             )
-            break
 
-        prev = response.text
-        page += 1
-    return items
+            json = response.json()
+            logger.info(
+                f"Query with OFFSET {offset}, page size {PAGE_SIZE} - got {len(json)} results"
+            )
+            results += json
+            offset += PAGE_SIZE
+
+            if len(json) < PAGE_SIZE:
+                break
+
+    logger.info(f"Done running SPARQL select - got a total of {len(results)} results")
+    return results
+
+
+def cast_to_list(list_or_any: Union[list[Any], Any]) -> list[Any]:
+    if type(list_or_any) is not list:
+        list_or_any = [list_or_any]
+    return typing.cast(list[Any], list_or_any)
 
 
 @task
-def request_triply_get(endpoint: str, triplydb_block_name: str) -> Response:
+def request_triply_get(
+    endpoint: str,
+    triplydb_block_name: str,
+    extra_headers: Optional[dict[str, str]] = None,
+) -> Response:
     """
     Send a GET request including the triply token to the given endpoint.
     """
@@ -153,7 +109,7 @@ def request_triply_get(endpoint: str, triplydb_block_name: str) -> Response:
     bearer_token = credentials.token.get_secret_value()
 
     # Send GET request
-    headers = get_triply_headers(bearer_token)
+    headers = get_triply_headers(bearer_token, extra_headers)
     logger.info(f"Sending GET request to {endpoint}")
     response = requests.get(endpoint, headers=headers)
 
@@ -162,29 +118,32 @@ def request_triply_get(endpoint: str, triplydb_block_name: str) -> Response:
     return response
 
 
-@task()
-def request_triply_post(endpoint: str, body: str, triplydb_block_name: str) -> Response:
+@task(retries=5, retry_delay_seconds=1)
+def request_triply_post(
+    endpoint: str,
+    body: str,
+    triplydb_block_name: str,
+    extra_headers: Optional[dict[str, str]] = None,
+) -> Response:
     """
-    Send a POST request including the triply token to the given endpoint.
+    Send a POST request containing the triply token to the given endpoint.
     """
     logger = get_run_logger()
 
-    # Load credentials
     credentials = TriplyDBCredentials.load(triplydb_block_name)
     bearer_token = credentials.token.get_secret_value()
 
-    # Send POST request
+    extra_headers = {} if extra_headers is None else extra_headers
+    content_type = {"Content-Type": "application/sparql-query"}
     headers = get_triply_headers(
-        bearer_token,
-        extra_headers={"Content-Type": "application/sparql-query"},
+        bearer_token, extra_headers=extra_headers | content_type
     )
 
     logger.info(f"Sending POST request to {endpoint}")
     response = requests.post(endpoint, headers=headers, data=body)
 
     if response.status_code != 200:
-        logger.error(f"Status code {response.status_code} - {response.reason}")
-        raise Exception("Request did not return status code 200")
+        raise Exception(f"Status code {response.status_code} - {response.reason}")
 
     return response
 
