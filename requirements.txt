@@ -1,3 +1,2 @@
-prefect==2.14.12
+prefect
 pydantic==1.10.8
-
