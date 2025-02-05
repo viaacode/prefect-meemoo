@@ -1,9 +1,6 @@
 # Credentials
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Mediahaven](./index.md#mediahaven) /
-Credentials
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Mediahaven](./index.md#mediahaven) / Credentials
 
 > Auto-generated documentation for [prefect_meemoo.mediahaven.credentials](../../../prefect_meemoo/mediahaven/credentials.py) module.
 
@@ -13,7 +10,7 @@ Credentials
 
 ## MediahavenCredentials
 
-[Show source in credentials.py:7](../../../prefect_meemoo/mediahaven/credentials.py#L7)
+[Show source in credentials.py:10](../../../prefect_meemoo/mediahaven/credentials.py#L10)
 
 Block used to manage authentication with Mediahaven.
 
@@ -37,13 +34,12 @@ credentials = MediahavenCredentials.load("BLOCK_NAME")
 #### Signature
 
 ```python
-class MediahavenCredentials(Block):
-    ...
+class MediahavenCredentials(Block): ...
 ```
 
 ### MediahavenCredentials().get_client
 
-[Show source in credentials.py:39](../../../prefect_meemoo/mediahaven/credentials.py#L39)
+[Show source in credentials.py:45](../../../prefect_meemoo/mediahaven/credentials.py#L45)
 
 Helper method to get a MediaHaven client.
 
@@ -59,6 +55,5 @@ Helper method to get a MediaHaven client.
 #### Signature
 
 ```python
-def get_client(self) -> MediaHaven:
-    ...
+def get_client(self) -> MediaHaven: ...
 ```

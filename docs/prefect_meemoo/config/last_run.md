@@ -1,19 +1,29 @@
 # Last Run
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Config](./index.md#config) /
-Last Run
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Config](./index.md#config) / Last Run
 
 > Auto-generated documentation for [prefect_meemoo.config.last_run](../../../prefect_meemoo/config/last_run.py) module.
 
 - [Last Run](#last-run)
+  - [add_last_run_with_context](#add_last_run_with_context)
   - [get_last_run_config](#get_last_run_config)
   - [save_last_run_config](#save_last_run_config)
 
+## add_last_run_with_context
+
+[Show source in last_run.py:53](../../../prefect_meemoo/config/last_run.py#L53)
+
+#### Signature
+
+```python
+def add_last_run_with_context(context: str, time: pendulum.DateTime = None): ...
+```
+
+
+
 ## get_last_run_config
 
-[Show source in last_run.py:36](../../../prefect_meemoo/config/last_run.py#L36)
+[Show source in last_run.py:60](../../../prefect_meemoo/config/last_run.py#L60)
 
 Get the last run config for a flow.
 If the flow is run with the parameter `full_sync` and it is True, the last run config is ignored.
@@ -43,15 +53,14 @@ def main_flow(
 #### Signature
 
 ```python
-def get_last_run_config(format="%Y-%m-%dT%H:%M:%S.%fZ"):
-    ...
+def get_last_run_config(format="%Y-%m-%dT%H:%M:%S.%fZ", context: str = ""): ...
 ```
 
 
 
 ## save_last_run_config
 
-[Show source in last_run.py:7](../../../prefect_meemoo/config/last_run.py#L7)
+[Show source in last_run.py:8](../../../prefect_meemoo/config/last_run.py#L8)
 
 Save the last run config for a flow.
 
@@ -76,6 +85,5 @@ def main_flow(
 #### Signature
 
 ```python
-def save_last_run_config(flow: Flow, flow_run: FlowRun, state):
-    ...
+def save_last_run_config(flow: Flow, flow_run: FlowRun, state): ...
 ```
