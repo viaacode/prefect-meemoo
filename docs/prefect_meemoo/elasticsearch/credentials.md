@@ -1,9 +1,6 @@
 # Credentials
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Elasticsearch](./index.md#elasticsearch) /
-Credentials
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Elasticsearch](./index.md#elasticsearch) / Credentials
 
 > Auto-generated documentation for [prefect_meemoo.elasticsearch.credentials](../../../prefect_meemoo/elasticsearch/credentials.py) module.
 
@@ -13,7 +10,7 @@ Credentials
 
 ## ElasticsearchCredentials
 
-[Show source in credentials.py:7](../../../prefect_meemoo/elasticsearch/credentials.py#L7)
+[Show source in credentials.py:10](../../../prefect_meemoo/elasticsearch/credentials.py#L10)
 
 Block used to manage authentication with Elasticsearch.
 
@@ -35,13 +32,12 @@ credentials = ElasticsearchCredentials.load("BLOCK_NAME")
 #### Signature
 
 ```python
-class ElasticsearchCredentials(Block):
-    ...
+class ElasticsearchCredentials(Block): ...
 ```
 
 ### ElasticsearchCredentials().get_client
 
-[Show source in credentials.py:33](../../../prefect_meemoo/elasticsearch/credentials.py#L33)
+[Show source in credentials.py:38](../../../prefect_meemoo/elasticsearch/credentials.py#L38)
 
 Helper method to get an Elasticsearch client.
 
@@ -52,6 +48,5 @@ Helper method to get an Elasticsearch client.
 #### Signature
 
 ```python
-def get_client(self) -> Elasticsearch:
-    ...
+def get_client(self) -> Elasticsearch: ...
 ```

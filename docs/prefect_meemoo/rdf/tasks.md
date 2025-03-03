@@ -1,9 +1,6 @@
 # Tasks
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Rdf](./index.md#rdf) /
-Tasks
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Rdf](./index.md#rdf) / Tasks
 
 > Auto-generated documentation for [prefect_meemoo.rdf.tasks](../../../prefect_meemoo/rdf/tasks.py) module.
 
@@ -41,8 +38,7 @@ Concatenates a couple of ntriples lines
 
 ```python
 @task(name="concatenate ntriples")
-def combine_ntriples(*ntriples: str):
-    ...
+def combine_ntriples(*ntriples: str): ...
 ```
 
 
@@ -55,8 +51,7 @@ def combine_ntriples(*ntriples: str):
 
 ```python
 @task(name="compare RDF files")
-def compare(input_data1: str, input_data2: str):
-    ...
+def compare(input_data1: str, input_data2: str): ...
 ```
 
 
@@ -68,8 +63,7 @@ def compare(input_data1: str, input_data2: str):
 #### Signature
 
 ```python
-def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = None):
-    ...
+def create_sparqlwrapper(endpoint: str, method: str = None, auth: AuthBase = None): ...
 ```
 
 
@@ -93,8 +87,7 @@ Converts Python dict objects to RDF by direct mapping
 
 ```python
 @task(name="convert python dict to rdf")
-def dict_to_rdf(ns: str = SRC_NS, *input_data: dict):
-    ...
+def dict_to_rdf(ns: str = SRC_NS, *input_data: dict): ...
 ```
 
 #### See also
@@ -122,8 +115,7 @@ Converts JSON documents to RDF by direct mapping
 
 ```python
 @task(name="convert json to rdf")
-def json_to_rdf(ns: str = SRC_NS, *input_data: str):
-    ...
+def json_to_rdf(ns: str = SRC_NS, *input_data: str): ...
 ```
 
 #### See also
@@ -139,8 +131,7 @@ def json_to_rdf(ns: str = SRC_NS, *input_data: str):
 #### Signature
 
 ```python
-def resolve_text(value):
-    ...
+def resolve_text(value): ...
 ```
 
 
@@ -169,8 +160,7 @@ Send a DELETE request to a SPARQL Graph Store HTTP Protocol endpoint
 @task(name="SPARQL Graph Store 1.1 DELETE")
 def sparql_gsp_delete(
     endpoint: str, graph: str = None, auth: AuthBase = None, timeout: float = TIMEOUT
-):
-    ...
+): ...
 ```
 
 #### See also
@@ -208,8 +198,7 @@ def sparql_gsp_get(
     content_type: str = "text/turtle",
     auth: AuthBase = None,
     timeout: float = TIMEOUT,
-):
-    ...
+): ...
 ```
 
 #### See also
@@ -249,8 +238,7 @@ def sparql_gsp_post(
     content_type: str = "text/turtle",
     auth: AuthBase = None,
     timeout: float = TIMEOUT,
-):
-    ...
+): ...
 ```
 
 #### See also
@@ -290,8 +278,7 @@ def sparql_gsp_put(
     content_type: str = "text/turtle",
     auth: AuthBase = None,
     timeout: float = TIMEOUT,
-):
-    ...
+): ...
 ```
 
 #### See also
@@ -328,8 +315,7 @@ def sparql_select(
     method: str = "POST",
     headers: Optional[Dict[str, Any]] = None,
     auth: AuthBase = None,
-):
-    ...
+): ...
 ```
 
 
@@ -353,8 +339,7 @@ Transforms one RDF graph in another using a CONSTRUCT query
 
 ```python
 @task(name="sparql transformation")
-def sparql_transform(input_data: str, query: str):
-    ...
+def sparql_transform(input_data: str, query: str): ...
 ```
 
 
@@ -378,8 +363,7 @@ Transforms one RDF graph in another using an INSERT query
 #### Signature
 
 ```python
-def sparql_transform_insert(input_data: str, query: str, target_graph: str):
-    ...
+def sparql_transform_insert(input_data: str, query: str, target_graph: str): ...
 ```
 
 
@@ -404,8 +388,7 @@ Clear a graph using SPARQL Update.
 
 ```python
 @task(name="clear graph")
-def sparql_update_clear(graph, endpoint, silent=True):
-    ...
+def sparql_update_clear(graph, endpoint, silent=True): ...
 ```
 
 
@@ -430,8 +413,7 @@ Insert an iterable of RDFLib triples using SPARQL Update.
 
 ```python
 @task(name="insert RDF triples")
-def sparql_update_insert(triples, endpoint, graph=None):
-    ...
+def sparql_update_insert(triples, endpoint, graph=None): ...
 ```
 
 
@@ -464,8 +446,7 @@ def sparql_update_query(
     method: str = "POST",
     headers: Optional[Dict[str, Any]] = None,
     auth: AuthBase = None,
-):
-    ...
+): ...
 ```
 
 
@@ -477,8 +458,7 @@ def sparql_update_query(
 #### Signature
 
 ```python
-def to_ntriples(t, namespace_manager=None):
-    ...
+def to_ntriples(t, namespace_manager=None): ...
 ```
 
 
@@ -491,6 +471,5 @@ def to_ntriples(t, namespace_manager=None):
 
 ```python
 @task(name="validate ntriples")
-def validate_ntriples(input_data: str, shacl_graph: str, ont_graph: str = None):
-    ...
+def validate_ntriples(input_data: str, shacl_graph: str, ont_graph: str = None): ...
 ```

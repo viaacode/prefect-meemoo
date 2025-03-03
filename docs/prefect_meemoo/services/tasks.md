@@ -1,9 +1,6 @@
 # Tasks
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Services](./index.md#services) /
-Tasks
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Services](./index.md#services) / Tasks
 
 > Auto-generated documentation for [prefect_meemoo.services.tasks](../../../prefect_meemoo/services/tasks.py) module.
 
@@ -33,6 +30,5 @@ Task that runs an ETL service over HTTP.
     name="Run HTTP ETL service",
     description="Runs an ETL service that is exposed by HTTP API.",
 )
-def sync_etl_service(api_server: str, api_route: str, last_modified: str):
-    ...
+def sync_etl_service(api_server: str, api_route: str, last_modified: str): ...
 ```

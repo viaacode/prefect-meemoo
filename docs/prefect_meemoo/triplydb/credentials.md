@@ -1,9 +1,6 @@
 # Credentials
 
-[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) /
-[Prefect Meemoo](../index.md#prefect-meemoo) /
-[Triplydb](./index.md#triplydb) /
-Credentials
+[Prefect-meemoo Index](../../README.md#prefect-meemoo-index) / [Prefect Meemoo](../index.md#prefect-meemoo) / [Triplydb](./index.md#triplydb) / Credentials
 
 > Auto-generated documentation for [prefect_meemoo.triplydb.credentials](../../../prefect_meemoo/triplydb/credentials.py) module.
 
@@ -12,7 +9,7 @@ Credentials
 
 ## TriplyDBCredentials
 
-[Show source in credentials.py:5](../../../prefect_meemoo/triplydb/credentials.py#L5)
+[Show source in credentials.py:8](../../../prefect_meemoo/triplydb/credentials.py#L8)
 
 Block used to manage authentication with TriplyDB.
 
@@ -36,6 +33,5 @@ credentials = TriplyDBCredentials.load("BLOCK_NAME")
 #### Signature
 
 ```python
-class TriplyDBCredentials(Block):
-    ...
+class TriplyDBCredentials(Block): ...
 ```
