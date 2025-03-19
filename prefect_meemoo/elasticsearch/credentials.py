@@ -35,7 +35,7 @@ class ElasticsearchCredentials(Block):
     except KeyError:
         _block_schema_capabilities = ["meemoo-prefect", "credentials", "v"+ version('prefect-meemoo')]
 
-    def get_client(self) -> Elasticsearch:
+    def get_client(self, **kwargs) -> Elasticsearch:
         """
         Helper method to get an Elasticsearch client.
 
@@ -48,5 +48,6 @@ class ElasticsearchCredentials(Block):
             self.url,
             basic_auth=(self.username, self.password.get_secret_value()),
             verify_certs=False,
+            **kwargs
         )
         return client

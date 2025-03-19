@@ -1,2 +1,2 @@
-elasticsearch
+elasticsearch==8.17.2
 pydantic==1.10.8
