@@ -53,7 +53,7 @@ def _get_current_last_run_config(name=None) -> LastRunConfig:
 def delete_last_run_config():
     name = _get_current_last_run_config_name()
     last_run_config = _get_current_last_run_config(name)
-    last_run_config.delete()
+    last_run_config.delete(name)
 
 def add_last_run_with_context(context: str, time: pendulum.DateTime=None):
     name = _get_current_last_run_config_name()
