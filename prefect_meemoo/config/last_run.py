@@ -49,6 +49,11 @@ def _get_current_last_run_config(name=None) -> LastRunConfig:
         return LastRunConfig.load(name)
     except ValueError as e:
         return None
+    
+def delete_last_run_config():
+    name = _get_current_last_run_config_name()
+    last_run_config = _get_current_last_run_config(name)
+    last_run_config.delete()
 
 def add_last_run_with_context(context: str, time: pendulum.DateTime=None):
     name = _get_current_last_run_config_name()
