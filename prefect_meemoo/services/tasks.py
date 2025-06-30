@@ -48,9 +48,13 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
             json=payload,
         )
 
-        if res.status_code != 200:
+        if not res.ok:
             logger.error(f"{api_server}{api_route} sync request failed: {res.text}")
-            return Failed()
+            raise ConnectionError(
+                f"Failed to run ETL service at {api_server}{api_route} with status code {res.status_code}"
+            )
+        else:
+            logger.info(f"{api_server}{api_route} sync request successful: {res.text}")
 
         running = True
         while running:
