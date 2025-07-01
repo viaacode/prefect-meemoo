@@ -3,27 +3,17 @@ from prefect.client.orchestration import get_client
 from prefect.client.schemas.objects import StateType
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
-from pydantic import BaseModel, AnyUrl
-
-class deploymentModel(BaseModel):
-    """
-    Represents a deployment with its name, active status, and URL.
-    """
-    name: str
-    active: bool = True
-    url: AnyUrl = None
-
-class downstreamDeploymentModel(deploymentModel):
-    """
-    Represents a downstream deployment with its name, active status, URL, and boolean for ready for updates.
-    """
-    ready: bool = True
 
 @task(task_run_name="Run deployment {name}")
 def run_deployment_task(
     name: str,
     as_subflow: bool = True
 ):
+    """
+    Run a deployment by its name.
+    If `as_subflow` is True, it will run the deployment as a subflow.
+    If `as_subflow` is False, it will run the deployment as a flow run, not waiting for its completion.
+    """
     logger = get_run_logger()
     logger.info(f"Running deployment {name}")
     flow_run = run_deployment(
