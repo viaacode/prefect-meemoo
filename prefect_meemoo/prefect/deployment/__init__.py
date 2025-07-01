@@ -3,8 +3,9 @@ from prefect_meemoo.prefect.deployment.tasks import (
     change_deployment_parameters,
     task_failure_hook_change_deployment_parameters,
     get_deployment_parameter,
-    mark_deployment_as_ready,
-    mark_deployment_as_not_ready,
+    add_sub_deployments_to_deployment_param,
+    check_deployment_blocking,
+    check_deployment_running_flows,
 )
 
 from prefect_meemoo.prefect.deployment.models import DeploymentModel, SubDeploymentModel
