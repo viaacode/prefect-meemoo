@@ -1,24 +1,20 @@
 from prefect import flow
-from prefect_meemoo.triplydb import run_sparql
+from prefect_meemoo.triplydb import run_sparql_select, run_saved_query
 import os
 
 endpoint = os.environ["ENDPOINT"]
 
 query = """
-prefix premis: <http://www.loc.gov/premis/rdf/v3/>
+prefix org: <http://www.w3.org/ns/org#>
 
 SELECT *
 WHERE {
-	?s a premis:IntellectualEntity
+	?s a org:Organization .
 }
+LIMIT 10000
+OFFSET 0
 """
 
-
-@flow
-def main():
-    results = run_sparql(endpoint, query, "triplydb-prd", 20_100, 1)
-    print(len(list(results)))
-
-
 if __name__ == "__main__":
-    main()
+    results = run_sparql_select(endpoint, query, "triplydb")
+    print(len(list(results)))
