@@ -21,12 +21,12 @@ class DeploymentModel(BaseModel):
     full_sync: bool = False
     sub_deployments: list[SubDeploymentModel] = []
 
-def is_sub_deployment_model(obj: dict) -> bool:
+def is_deployment_model(obj: dict) -> bool:
     """
     Check if the dict can be converted to an instance of DeploymentModel.
     """
     try:
-        SubDeploymentModel(**obj)
+        DeploymentModel(**obj)
         return True
     except Exception:
         return False

@@ -4,7 +4,7 @@ from prefect.client.schemas.objects import StateType
 from prefect.client.schemas.filters import FlowRunFilter
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
-from prefect_meemoo.prefect.deployment.models import SubDeploymentModel, DeploymentModel, is_sub_deployment_model
+from prefect_meemoo.prefect.deployment.models import SubDeploymentModel, DeploymentModel, is_deployment_model
 from typing import Union
 
 @task(task_run_name="Run deployment {name}")
@@ -142,8 +142,8 @@ def add_sub_deployments_to_deployment_param(
 
     Args:
         name (str): The name of the deployment.
-        downstream_deployment_model (DeploymentModel): The downstream deployment model to which sub-deployments will be added.
-        downstream_deployment_parameter (str): The parameter name in the deployment where sub-deployments will be added.
+        deployment_model (DeploymentModel): The downstream deployment model to which sub-deployments will be added.
+        deployment_model_parameter (str): The parameter name of the deployment where sub-deployments will be added.
 
     Returns:
         Bool: True if sub-deployments were added, False otherwise.
@@ -156,12 +156,18 @@ def add_sub_deployments_to_deployment_param(
     ).result()
     has_added = False
     for key, value in downstream_deployment.parameters.items():
-        if is_sub_deployment_model(value):
-            sub_deployment = SubDeploymentModel(**value)
-            if sub_deployment.name not in [d.name for d in deployment_model.sub_deployments]:
+        if is_deployment_model(value):
+            deployment = DeploymentModel(**value)
+            if deployment.name not in [d.name for d in deployment_model.sub_deployments]:
+                sub_deployment = SubDeploymentModel(
+                    name=deployment.name,
+                    active=deployment.active,
+                    is_blocking=deployment.is_blocking,
+                    full_sync=deployment.full_sync
+                )
                 deployment_model.sub_deployments.append(sub_deployment)
                 has_added = True
-                logger.info(f"Added sub-deployment {sub_deployment.name} to downstream deployment {deployment_model.name}, check if it is blocking.")
+                logger.info(f"Added sub-deployment {deployment.name} to downstream deployment {deployment_model.name}, check if it is blocking.")
     if has_added:
         change_deployment_parameters.fn(
             name=name,
@@ -171,7 +177,39 @@ def add_sub_deployments_to_deployment_param(
         )
     return has_added
 
-    
+@task(task_run_name="Change downstream sub-deployment parameters {name}")
+def change_sub_deployment_parameters(
+    deployment_model: DeploymentModel,
+):
+    """
+    Change parameters of sub-deployments in a downstream deployment.
+    Args:
+        downstream_deployment_model (DeploymentModel): The downstream deployment model containing sub-deployments.
+    """
+    logger = get_run_logger()
+    downstream_deployment = from_sync.call_soon_in_loop_thread(
+        create_call(get_client().read_deployment_by_name, deployment_model.name)
+    ).result()
+    for key, value in downstream_deployment.parameters.items():
+        has_changed = False
+        if is_deployment_model(value):
+            deployment = DeploymentModel(**value)
+            for sub_deployment in deployment_model.sub_deployments:
+                if sub_deployment.name == deployment.name:
+                    has_changed = sub_deployment.active != deployment.active or \
+                        sub_deployment.full_sync != deployment.full_sync
+                    deployment.active = sub_deployment.active
+                    deployment.full_sync = sub_deployment.full_sync
+                if has_changed:
+                    logger.info(f"Changing parameters of sub-deployments in downstream deployment {deployment_model.name}")
+                    change_deployment_parameters.fn(
+                        name=deployment_model.name,
+                        parameters={
+                            key: deployment.dict()
+                        }
+                    )
+
+        
     
 def check_deployment_running_flows(
     name: str
