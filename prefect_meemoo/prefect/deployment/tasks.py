@@ -178,7 +178,7 @@ def add_sub_deployments_to_deployment_param(
     return has_added
 
 @task(task_run_name="Change downstream sub-deployment parameters {name}")
-def change_downstream_sub_deployment_parameters(
+def change_sub_deployment_parameters(
     downstream_deployment_model: DeploymentModel,
 ):
     """
