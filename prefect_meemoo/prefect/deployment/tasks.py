@@ -3,27 +3,17 @@ from prefect.client.orchestration import get_client
 from prefect.client.schemas.objects import StateType
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
-from pydantic import BaseModel, AnyUrl
-
-class deploymentModel(BaseModel):
-    """
-    Represents a deployment with its name, active status, and URL.
-    """
-    name: str
-    active: bool = True
-    url: AnyUrl = None
-
-class downstreamDeploymentModel(deploymentModel):
-    """
-    Represents a downstream deployment with its name, active status, URL, and boolean for ready for updates.
-    """
-    ready: bool = True
 
 @task(task_run_name="Run deployment {name}")
 def run_deployment_task(
     name: str,
     as_subflow: bool = True
 ):
+    """
+    Run a deployment by its name.
+    If `as_subflow` is True, it will run the deployment as a subflow.
+    If `as_subflow` is False, it will run the deployment as a flow run, not waiting for its completion.
+    """
     logger = get_run_logger()
     logger.info(f"Running deployment {name}")
     flow_run = run_deployment(
@@ -141,6 +131,40 @@ def mark_deployment_as_ready(
         if downstream_deployment.name == name:
             downstream_deployment.ready = True
             logger.info(f"Deployment {name} marked as ready for updates")
+    else:
+        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
+        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
+    # Update the upstream deployment with the modified downstream deployment
+    change_deployment_parameters.fn(name=upstream_name, parameters={downstream_deployment_parameter: downstream_deployment})
+
+@task(task_run_name="Mark deployment {name} as not ready for updates in upstream deployment {upstream_name}")
+def mark_deployment_as_not_ready(
+    name: str,
+    upstream_name: str,
+    downstream_deployment_parameter: str
+):
+    """
+    Mark a deployment as not ready for updates in an upstream deployment.
+    """
+    logger = get_run_logger()
+    logger.info(f"Marking deployment {name} as not ready for updates in upstream deployment {upstream_name}")
+    downstream_deployment = get_deployment_parameter.fn(name=upstream_name, parameter_name=downstream_deployment_parameter)
+    if not downstream_deployment:
+        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
+        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
+    elif isinstance(downstream_deployment, list):
+        for deployment in downstream_deployment:
+            if deployment.name == name:
+                deployment.ready = False
+                logger.info(f"Deployment {name} marked as not ready for updates")
+                break
+        else:
+            logger.error(f"Deployment {name} not found in downstream deployments of {upstream_name}")
+            raise ValueError(f"Deployment {name} not found in downstream deployments of {upstream_name}")
+    elif isinstance(downstream_deployment, dict):
+        if downstream_deployment.name == name:
+            downstream_deployment.ready = False
+            logger.info(f"Deployment {name} marked as not ready for updates")
     else:
         logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
         raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
