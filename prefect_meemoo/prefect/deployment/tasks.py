@@ -1,8 +1,11 @@
-from prefect import task, get_run_logger
+from prefect import task, get_run_logger, settings
 from prefect.client.orchestration import get_client
 from prefect.client.schemas.objects import StateType
+from prefect.client.schemas.filters import FlowRunFilter
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
+from prefect_meemoo.prefect.deployment.models import SubDeploymentModel, DeploymentModel, is_sub_deployment_model
+from typing import Union
 
 @task(task_run_name="Run deployment {name}")
 def run_deployment_task(
@@ -103,70 +106,98 @@ def get_deployment_parameter(name: str, parameter_name: str) -> dict:
         return None
     return deployment.parameters[parameter_name]
 
-@task(task_run_name="Mark deployment {name} as ready for updates in upstream deployment {upstream_name}")
-def mark_deployment_as_ready(
-    name: str,
-    upstream_name: str,
-    downstream_deployment_parameter: str
-):
+@task(task_run_name="Check if downstream deployments or its sub-deployments are blocking")
+def check_deployment_blocking(
+    deployment_model: Union[SubDeploymentModel, DeploymentModel, list[SubDeploymentModel], list[DeploymentModel]]
+) -> bool:
     """
-    Mark a deployment as ready for updates in an upstream deployment.
+    Check if a deployment or its sub-deployments are blocking.
     """
     logger = get_run_logger()
-    logger.info(f"Marking deployment {name} as ready for updates in upstream deployment {upstream_name}")
-    downstream_deployment = get_deployment_parameter.fn(name=upstream_name, parameter_name=downstream_deployment_parameter)
-    if not downstream_deployment:
-        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
-        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
-    elif isinstance(downstream_deployment, list):
-        for deployment in downstream_deployment:
-            if deployment.name == name:
-                deployment.ready = True
-                logger.info(f"Deployment {name} marked as ready for updates")
-                break
-        else:
-            logger.error(f"Deployment {name} not found in downstream deployments of {upstream_name}")
-            raise ValueError(f"Deployment {name} not found in downstream deployments of {upstream_name}")
-    elif isinstance(downstream_deployment, dict):
-        if downstream_deployment.name == name:
-            downstream_deployment.ready = True
-            logger.info(f"Deployment {name} marked as ready for updates")
-    else:
-        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
-        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
-    # Update the upstream deployment with the modified downstream deployment
-    change_deployment_parameters.fn(name=upstream_name, parameters={downstream_deployment_parameter: downstream_deployment})
+    logger.info(f"Checking if downstream deployment {deployment_model.name} or its sub-deployments are blocking")
+    if isinstance(deployment_model, list):
+        for dep in deployment_model:
+            if check_deployment_blocking(dep):
+                return True
+    if deployment_model.is_blocking:
+        if check_deployment_running_flows(deployment_model.name):
+            logger.info(f"Deployment {deployment_model.name} is blocking new flow run.")
+            return True
+    if not isinstance(deployment_model, DeploymentModel):
+        return False
+    for sub_deployment in deployment_model.sub_deployments:
+        if check_deployment_blocking(sub_deployment):
+            logger.info(f"Sub-deployment {sub_deployment.name} is blocking new flow run.")
+            return True
+    return False
 
-@task(task_run_name="Mark deployment {name} as not ready for updates in upstream deployment {upstream_name}")
-def mark_deployment_as_not_ready(
+@task(task_run_name="Add sub-deployments to deployment {deployment_model.name}")
+def add_sub_deployments_to_deployment_param(
     name: str,
-    upstream_name: str,
-    downstream_deployment_parameter: str
-):
+    deployment_model: DeploymentModel,
+    deployment_model_parameter: str
+) -> bool:
     """
-    Mark a deployment as not ready for updates in an upstream deployment.
+    Add sub-deployments to a downstream deployment.
+
+    Args:
+        name (str): The name of the deployment.
+        downstream_deployment_model (DeploymentModel): The downstream deployment model to which sub-deployments will be added.
+        downstream_deployment_parameter (str): The parameter name in the deployment where sub-deployments will be added.
+
+    Returns:
+        Bool: True if sub-deployments were added, False otherwise.
     """
     logger = get_run_logger()
-    logger.info(f"Marking deployment {name} as not ready for updates in upstream deployment {upstream_name}")
-    downstream_deployment = get_deployment_parameter.fn(name=upstream_name, parameter_name=downstream_deployment_parameter)
-    if not downstream_deployment:
-        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
-        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} not found in upstream deployment {upstream_name}")
-    elif isinstance(downstream_deployment, list):
-        for deployment in downstream_deployment:
-            if deployment.name == name:
-                deployment.ready = False
-                logger.info(f"Deployment {name} marked as not ready for updates")
-                break
-        else:
-            logger.error(f"Deployment {name} not found in downstream deployments of {upstream_name}")
-            raise ValueError(f"Deployment {name} not found in downstream deployments of {upstream_name}")
-    elif isinstance(downstream_deployment, dict):
-        if downstream_deployment.name == name:
-            downstream_deployment.ready = False
-            logger.info(f"Deployment {name} marked as not ready for updates")
+    logger.info(f"Adding sub-deployments to downstream deployment {deployment_model.name}")
+    prefect_client = get_client()
+    downstream_deployment = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_deployment_by_name, deployment_model.name)
+    ).result()
+    has_added = False
+    for key, value in downstream_deployment.parameters.items():
+        if is_sub_deployment_model(value):
+            sub_deployment = SubDeploymentModel(**value)
+            if sub_deployment.name not in [d.name for d in deployment_model.sub_deployments]:
+                deployment_model.sub_deployments.append(sub_deployment)
+                has_added = True
+                logger.info(f"Added sub-deployment {sub_deployment.name} to downstream deployment {deployment_model.name}, check if it is blocking.")
+    if has_added:
+        change_deployment_parameters.fn(
+            name=name,
+            parameters={
+                deployment_model_parameter: deployment_model.dict()
+            }
+        )
+    return has_added
+
+    
+    
+def check_deployment_running_flows(
+    name: str
+) -> bool:
+    """This function returns a list of all running flow runs for a given flow name in Prefect.
+
+
+    Returns:
+        bool: True if there are running flow runs, False otherwise.
+    """
+    prefect_client = get_client()
+    deployment = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_deployment_by_name, name)
+    ).result()
+    flow_runs = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_flow_runs, 
+            FlowRunFilter(deployment_id=deployment.id, state=StateType.RUNNING)
+        )
+    ).result()
+    if flow_runs:
+        logger = get_run_logger()
+        logger.info(f"Deployment {name} has running flow runs: {flow_runs}")
+        return True
     else:
-        logger.error(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
-        raise ValueError(f"Downstream deployment parameter {downstream_deployment_parameter} is not a valid deployment model in upstream deployment {upstream_name}")
-    # Update the upstream deployment with the modified downstream deployment
-    change_deployment_parameters.fn(name=upstream_name, parameters={downstream_deployment_parameter: downstream_deployment})
+        logger = get_run_logger()
+        logger.info(f"Deployment {name} has no running flow runs")
+        return False
+
+    
