@@ -7,4 +7,4 @@ from prefect_meemoo.prefect.deployment.tasks import (
     mark_deployment_as_not_ready,
 )
 
-from prefect_meemoo.prefect.deployment.models import deploymentModel, downstreamDeploymentModel
+from prefect_meemoo.prefect.deployment.models import DeploymentModel, SubDeploymentModel
