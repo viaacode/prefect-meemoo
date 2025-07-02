@@ -90,7 +90,7 @@ async def task_failure_hook_change_deployment_parameters(
     await prefect_client.update_deployment(deployment)
 
 @task(task_run_name="Get current deployment parameter from {name}")
-def get_deployment_parameter(name: str, parameter_name: str) -> dict:
+def get_deployment_parameter(name: str, parameter_name: str):
     """
     Get the current value of a deployment parameter.
     """
@@ -134,7 +134,7 @@ def check_deployment_blocking(
 @task(task_run_name="Add sub-deployments to deployment {deployment_model.name}")
 def add_sub_deployments_to_deployment_param(
     name: str,
-    deployment_model: DeploymentModel,
+    deployment_model: Union[DeploymentModel, list[DeploymentModel]],
     deployment_model_parameter: str
 ) -> bool:
     """
@@ -151,10 +151,20 @@ def add_sub_deployments_to_deployment_param(
     logger = get_run_logger()
     logger.info(f"Adding sub-deployments to downstream deployment {deployment_model.name}")
     prefect_client = get_client()
+    has_added = False
+
+    if isinstance(deployment_model, list):
+        for deployment in deployment_model:
+            has_added = has_added or add_sub_deployments_to_deployment_param(
+                name=name,
+                deployment_model=deployment,
+                deployment_model_parameter=deployment_model_parameter
+            )
+        return has_added
+    
     downstream_deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, deployment_model.name)
     ).result()
-    has_added = False
     for key, value in downstream_deployment.parameters.items():
         if is_deployment_model(value):
             deployment = DeploymentModel(**value)
@@ -169,12 +179,31 @@ def add_sub_deployments_to_deployment_param(
                 has_added = True
                 logger.info(f"Added sub-deployment {deployment.name} to downstream deployment {deployment_model.name}, check if it is blocking.")
     if has_added:
-        change_deployment_parameters.fn(
+        current_deployment_parameters = get_deployment_parameter.fn(
             name=name,
-            parameters={
-                deployment_model_parameter: deployment_model.dict()
-            }
+            parameter_name=deployment_model_parameter
         )
+        if isinstance(current_deployment_parameters, list):
+            for current_deployment_model in current_deployment_parameters:
+                if not is_deployment_model(current_deployment_model):
+                    logger.error(f"Current deployment parameter {deployment_model_parameter} is not a DeploymentModel.")
+                    raise ValueError(f"Current deployment parameter {deployment_model_parameter} is not a DeploymentModel.")
+                if current_deployment_model.name == deployment_model.name:
+                    current_deployment_model.sub_deployments = deployment_model.sub_deployments
+                    change_deployment_parameters.fn(
+                        name=name,
+                        parameters={
+                            deployment_model_parameter: [deployment_model.dict() for deployment_model in current_deployment_parameters]
+                        }
+                    )
+                    break
+        else:
+            change_deployment_parameters.fn(
+                name=name,
+                parameters={
+                    deployment_model_parameter: deployment_model.dict()
+                }
+            )
     return has_added
 
 @task(task_run_name="Change downstream sub-deployment parameters {name}")
