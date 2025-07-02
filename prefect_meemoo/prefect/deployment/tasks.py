@@ -1,7 +1,7 @@
 from prefect import task, get_run_logger, settings
 from prefect.client.orchestration import get_client
 from prefect.client.schemas.objects import StateType
-from prefect.client.schemas.filters import FlowRunFilter
+from prefect.client.schemas.filters import FlowRunFilter, FlowRunFilterDeploymentId, FlowRunFilterStateType
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
 from prefect_meemoo.prefect.deployment.models import SubDeploymentModel, DeploymentModel, is_deployment_model
@@ -122,6 +122,9 @@ def check_deployment_blocking(
     if deployment_model.is_blocking:
         if check_deployment_running_flows(deployment_model.name):
             logger.info(f"Deployment {deployment_model.name} is blocking new flow run.")
+            return True
+        if check_deployment_failed_flows(deployment_model.name):
+            logger.info(f"Deployment {deployment_model.name} has failed flow runs, blocking new flow run.")
             return True
     if not isinstance(deployment_model, DeploymentModel):
         return False
@@ -255,7 +258,7 @@ def check_deployment_running_flows(
     ).result()
     flow_runs = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_flow_runs, 
-            FlowRunFilter(deployment_id=deployment.id, state=StateType.RUNNING)
+            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'any_':["RUNNING"]})
         )
     ).result()
     if flow_runs:
@@ -267,4 +270,31 @@ def check_deployment_running_flows(
         logger.info(f"Deployment {name} has no running flow runs")
         return False
 
-    
+def check_deployment_failed_flows(
+    name: str
+) -> bool:
+    """This function returns a list of all failed flow runs for a given flow name in Prefect.
+
+    Args:
+        name (str): The name of the deployment to check for failed flow runs.
+
+    Returns:
+        bool: True if there are failed flow runs, False otherwise.
+    """
+    prefect_client = get_client()
+    deployment = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_deployment_by_name, name)
+    ).result()
+    flow_runs = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_flow_runs, 
+            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'type' : {'any_':["FAILED"]}})
+        )
+    ).result()
+    if flow_runs:
+        logger = get_run_logger()
+        logger.info(f"Deployment {name} has failed flow runs: {flow_runs}")
+        return True
+    else:
+        logger = get_run_logger()
+        logger.info(f"Deployment {name} has no failed flow runs")
+        return False
