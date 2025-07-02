@@ -6,6 +6,8 @@ from prefect_meemoo.prefect.deployment.tasks import (
     add_sub_deployments_to_deployment_param,
     check_deployment_blocking,
     check_deployment_running_flows,
+    check_deployment_failed_flows,
+    change_sub_deployment_parameters,
 )
 
 from prefect_meemoo.prefect.deployment.models import DeploymentModel, SubDeploymentModel

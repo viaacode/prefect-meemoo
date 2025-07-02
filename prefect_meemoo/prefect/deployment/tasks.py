@@ -258,7 +258,7 @@ def check_deployment_running_flows(
     ).result()
     flow_runs = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_flow_runs, 
-            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'any_':["RUNNING"]})
+            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'type' : {'any_':["RUNNING"]}})
         )
     ).result()
     if flow_runs:
