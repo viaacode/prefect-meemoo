@@ -286,7 +286,7 @@ def check_deployment_running_flows(
     flow_runs = response.json()
     if flow_runs and len(flow_runs) > max_running:
         logger = get_run_logger()
-        logger.info(f"Deployment {name} has running flow runs.")
+        logger.info(f"Deployment {name} has running flow runs: {', '.join([flow_run['id'] for flow_run in flow_runs])}")
         return True
     else:
         logger = get_run_logger()
@@ -294,7 +294,8 @@ def check_deployment_running_flows(
         return False
 
 def check_deployment_failed_flows(
-    name: str
+    name: str,
+    last_n: int = 1
 ) -> bool:
     """This function returns a list of all failed flow runs for a given flow name in Prefect.
 
@@ -314,13 +315,8 @@ def check_deployment_failed_flows(
     }
 
     payload = {
-        "flow_runs" : {
-            "state": {
-                "type" : {
-                    "any_": ["FAILED"]
-                }
-            }
-        },
+        "sort" : "START_TIME_DESC",
+        "limit": last_n,
         "deployments" : {
             "id" : {
                 "any_": [str(deployment.id)]
@@ -330,9 +326,11 @@ def check_deployment_failed_flows(
     response = requests.post(url, headers=headers, json=payload)
 
     flow_runs = response.json()
-    if flow_runs:
+    if flow_runs and any(
+        flow_run["state_type"] == "FAILED" for flow_run in flow_runs
+    ):
         logger = get_run_logger()
-        logger.info(f"Deployment {name} has failed flow runs: {flow_runs}")
+        logger.info(f"Deployment {name} has failed flow runs: {', '.join([flow_run['id'] for flow_run in flow_runs if flow_run['state_type'] == 'FAILED'])}")
         return True
     else:
         logger = get_run_logger()
