@@ -1,7 +1,7 @@
-from prefect import task, get_run_logger, settings
+import requests
+from prefect import task, get_run_logger
 from prefect.client.orchestration import get_client
 from prefect.client.schemas.objects import StateType
-from prefect.client.schemas.filters import FlowRunFilter, FlowRunFilterDeploymentId, FlowRunFilterStateType
 from prefect.deployments import run_deployment
 from prefect._internal.concurrency.api import create_call, from_sync
 from prefect_meemoo.prefect.deployment.models import SubDeploymentModel, DeploymentModel, is_deployment_model
@@ -21,7 +21,8 @@ def run_deployment_task(
     logger.info(f"Running deployment {name}")
     flow_run = run_deployment(
         name=name,
-        as_subflow=as_subflow
+        as_subflow=as_subflow,
+        timeout=0 if not as_subflow else None
     )
     if as_subflow and flow_run.state.type != StateType.COMPLETED:
         logger.error(f"Deployment {name} failed")
@@ -135,7 +136,7 @@ def check_deployment_blocking(
     return False
 
 @task(task_run_name="Add sub-deployments to deployment {deployment_model.name}")
-def add_sub_deployments_to_deployment_param(
+def setup_sub_deployments_to_deployment_parameter(
     name: str,
     deployment_model: Union[DeploymentModel, list[DeploymentModel]],
     deployment_model_parameter: str
@@ -158,7 +159,7 @@ def add_sub_deployments_to_deployment_param(
 
     if isinstance(deployment_model, list):
         for deployment in deployment_model:
-            has_added = has_added or add_sub_deployments_to_deployment_param(
+            has_added = has_added or setup_sub_deployments_to_deployment_parameter(
                 name=name,
                 deployment_model=deployment,
                 deployment_model_parameter=deployment_model_parameter
@@ -168,6 +169,7 @@ def add_sub_deployments_to_deployment_param(
     downstream_deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, deployment_model.name)
     ).result()
+    logger.info(downstream_deployment.parameters)
     for key, value in downstream_deployment.parameters.items():
         if is_deployment_model(value):
             deployment = DeploymentModel(**value)
@@ -210,7 +212,7 @@ def add_sub_deployments_to_deployment_param(
     return has_added
 
 @task(task_run_name="Change downstream sub-deployment parameters {name}")
-def change_sub_deployment_parameters(
+def propagate_sub_deployment_parameters(
     deployment_model: DeploymentModel,
 ):
     """
@@ -240,9 +242,8 @@ def change_sub_deployment_parameters(
                             key: deployment.dict()
                         }
                     )
+                    break
 
-        
-    
 def check_deployment_running_flows(
     name: str
 ) -> bool:
@@ -256,14 +257,30 @@ def check_deployment_running_flows(
     deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, name)
     ).result()
-    flow_runs = from_sync.call_soon_in_loop_thread(
-        create_call(prefect_client.read_flow_runs, 
-            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'type' : {'any_':["RUNNING"]}})
-        )
-    ).result()
+    url = f"{prefect_client.api_url}flow_runs/filter"
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "flow_runs" : {
+            "state": {
+                "type" : {
+                    "any_": ["RUNNING"]
+                }
+            }
+        },
+        "deployments" : {
+            "id" : {
+                "any_": [str(deployment.id)]
+            }
+        }
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    flow_runs = response.json()
     if flow_runs:
         logger = get_run_logger()
-        logger.info(f"Deployment {name} has running flow runs: {flow_runs}")
+        logger.info(f"Deployment {name} has running flow runs.")
         return True
     else:
         logger = get_run_logger()
@@ -285,11 +302,28 @@ def check_deployment_failed_flows(
     deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, name)
     ).result()
-    flow_runs = from_sync.call_soon_in_loop_thread(
-        create_call(prefect_client.read_flow_runs, 
-            FlowRunFilter(deployment_id={'any_':[deployment.id]}, state={'type' : {'any_':["FAILED"]}})
-        )
-    ).result()
+    url = f"{prefect_client.api_url}flow_runs/filter"
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "flow_runs" : {
+            "state": {
+                "type" : {
+                    "any_": ["FAILED"]
+                }
+            }
+        },
+        "deployments" : {
+            "id" : {
+                "any_": [str(deployment.id)]
+            }
+        }
+    }
+    response = requests.post(url, headers=headers, json=payload)
+
+    flow_runs = response.json()
     if flow_runs:
         logger = get_run_logger()
         logger.info(f"Deployment {name} has failed flow runs: {flow_runs}")
