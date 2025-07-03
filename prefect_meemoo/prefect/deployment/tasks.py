@@ -115,20 +115,25 @@ def check_deployment_blocking(
     Check if a deployment or its sub-deployments are blocking.
     """
     logger = get_run_logger()
-    logger.info(f"Checking if downstream deployment {deployment_model.name} or its sub-deployments are blocking")
+
     if isinstance(deployment_model, list):
         for dep in deployment_model:
-            if check_deployment_blocking(dep):
+            if check_deployment_blocking.fn(dep):
                 return True
+        return False
+    
     if deployment_model.is_blocking:
+        logger.info(f"Checking if downstream deployment {deployment_model.name} or its sub-deployments are blocking")
         if check_deployment_running_flows(deployment_model.name):
             logger.info(f"Deployment {deployment_model.name} is blocking new flow run.")
             return True
         if check_deployment_failed_flows(deployment_model.name):
             logger.info(f"Deployment {deployment_model.name} has failed flow runs, blocking new flow run.")
             return True
+        
     if not isinstance(deployment_model, DeploymentModel):
         return False
+    
     for sub_deployment in deployment_model.sub_deployments:
         if check_deployment_blocking(sub_deployment):
             logger.info(f"Sub-deployment {sub_deployment.name} is blocking new flow run.")
