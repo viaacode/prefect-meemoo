@@ -4,7 +4,7 @@ import time
 import signal
 from prefect_meemoo.prefect.deployment import (
     run_deployment_task,
-    check_deployment_failed_flows,
+    check_deployment_last_flow_run_failed,
     DeploymentModel,
     check_deployment_blocking,
     setup_sub_deployments_to_deployment_parameter
@@ -76,7 +76,7 @@ async def test_check_deployment_failed_flows():
 
     with disable_run_logger():
         # Now check the result
-        result = check_deployment_failed_flows("test_check_deployment_failed_flows/failing-flow-deployment")
+        result = check_deployment_last_flow_run_failed("test_check_deployment_failed_flows/failing-flow-deployment")
 
     assert result is True
 
@@ -112,7 +112,7 @@ async def test_check_deployment_failed_flows_no_failures():
             await asyncio.sleep(1)
     with disable_run_logger():
         # Now check the result
-        result = check_deployment_failed_flows("test_check_deployment_failed_flows_no_failures/successful-flow-deployment")
+        result = check_deployment_last_flow_run_failed("test_check_deployment_failed_flows_no_failures/successful-flow-deployment")
     assert result is False
 
 @flow(name="test_deployment_blocking")
