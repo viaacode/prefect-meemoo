@@ -47,7 +47,6 @@ def change_deployment_parameters(
     for key, value in parameters.items():
         if key not in deployment.parameters:
             logger.warning(f"Parameter {key} not found in deployment {name}")
-            continue
         deployment.parameters[key] = value
     from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.update_deployment, deployment)
