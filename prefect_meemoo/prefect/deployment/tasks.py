@@ -245,7 +245,8 @@ def propagate_sub_deployment_parameters(
                     break
 
 def check_deployment_running_flows(
-    name: str
+    name: str,
+    max_running: int = 0
 ) -> bool:
     """This function returns a list of all running flow runs for a given flow name in Prefect.
 
@@ -278,7 +279,7 @@ def check_deployment_running_flows(
     }
     response = requests.post(url, headers=headers, json=payload)
     flow_runs = response.json()
-    if flow_runs:
+    if flow_runs and len(flow_runs) > max_running:
         logger = get_run_logger()
         logger.info(f"Deployment {name} has running flow runs.")
         return True
