@@ -126,9 +126,6 @@ def check_deployment_blocking(
         if check_deployment_running_flows(deployment_model.name):
             logger.info(f"Deployment {deployment_model.name} is blocking new flow run.")
             return True
-        if check_deployment_failed_flows(deployment_model.name):
-            logger.info(f"Deployment {deployment_model.name} has failed flow runs, blocking new flow run.")
-            return True
         
     if not isinstance(deployment_model, DeploymentModel):
         return False
@@ -252,9 +249,11 @@ def check_deployment_running_flows(
     name: str,
     max_running: int = 0
 ) -> bool:
-    """This function returns a list of all running flow runs for a given flow name in Prefect.
-
-
+    """
+    This function returns a list of all running flow runs for a given flow name in Prefect.
+    Args:
+        name (str): The name of the deployment.
+        max_running (int): The maximum number of running flow runs to check for. If 0, it will return True if there are any running flow runs.
     Returns:
         bool: True if there are running flow runs, False otherwise.
     """
@@ -292,17 +291,17 @@ def check_deployment_running_flows(
         logger.info(f"Deployment {name} has no running flow runs")
         return False
 
-def check_deployment_failed_flows(
+def check_deployment_last_flow_run_failed(
     name: str,
     last_n: int = 1
 ) -> bool:
-    """This function returns a list of all failed flow runs for a given flow name in Prefect.
-
+    """
+    Check if the last N flow runs of a deployment have failed.
     Args:
-        name (str): The name of the deployment to check for failed flow runs.
-
+        name (str): The name of the deployment.
+        last_n (int): The number of last flow runs to check for failures.
     Returns:
-        bool: True if there are failed flow runs, False otherwise.
+        bool: True if any of the last N flow runs have failed, False otherwise.
     """
     prefect_client = get_client()
     deployment = from_sync.call_soon_in_loop_thread(
