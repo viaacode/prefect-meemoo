@@ -194,6 +194,7 @@ def setup_sub_deployments_to_deployment_parameter(
                 if not is_deployment_model(current_deployment_model):
                     logger.error(f"Current deployment parameter {deployment_model_parameter} is not a DeploymentModel.")
                     raise ValueError(f"Current deployment parameter {deployment_model_parameter} is not a DeploymentModel.")
+                current_deployment_model = DeploymentModel(**current_deployment_model)
                 if current_deployment_model.name == deployment_model.name:
                     current_deployment_model.sub_deployments = deployment_model.sub_deployments
                     change_deployment_parameters.fn(
