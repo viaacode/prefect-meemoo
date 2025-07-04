@@ -251,3 +251,47 @@ def test_add_sub_depl():
         "test_deployment_sub_deployment_parent/sub-deployment-parent",
     )
     
+@flow(name="test_deployment_sub_deployment_parent_2")
+def sub_deployment_parent_flow_2(
+    sub_deployment_1: list[DeploymentModel] = [DeploymentModel(
+        name="test_deployment_sub_deployment_1/sub-deployment-1",
+        active=True,
+        is_blocking=False,
+        sub_deployments=[],
+        full_sync=False,
+    )]
+):
+    """
+    Flow that runs a parent deployment with a sub-deployment.
+    """
+    logger = get_run_logger()
+    setup_sub_deployments_to_deployment_parameter.submit(
+        name=f"{flow_run.get_flow_name()}/{deployment.get_name()}",
+        deployment_model=sub_deployment_1,
+        deployment_model_parameter="sub_deployment_1"
+    )
+    sleep_task.submit(1000)  # Simulate some work in the parent flow
+
+@pytest.mark.asyncio
+def test_add_sub_depl_2():
+    """
+    Test the add_sub_deployments_to_deployment_param function with a list of sub-deployments.
+    """
+    
+    deployment_1 = Deployment.build_from_flow(
+        flow=sub_deployment_1,
+        name="sub-deployment-1",
+        work_queue_name="default",
+        apply=True
+    )
+    
+    deployment_parent = Deployment.build_from_flow(
+        flow=sub_deployment_parent_flow_2,
+        name="sub-deployment-parent-2",
+        work_queue_name="default",
+        apply=True,
+    )
+    
+    run_deployment(
+        "test_deployment_sub_deployment_parent_2/sub-deployment-parent-2",
+    )

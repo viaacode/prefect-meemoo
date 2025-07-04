@@ -212,7 +212,7 @@ def setup_sub_deployments_to_deployment_parameter(
             )
     return has_added
 
-@task(task_run_name="Change downstream sub-deployment parameters {name}")
+@task(task_run_name="Change downstream sub-deployment parameters {deployment_model.name}")
 def propagate_sub_deployment_parameters(
     deployment_model: DeploymentModel,
 ):
