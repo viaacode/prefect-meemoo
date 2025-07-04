@@ -136,7 +136,7 @@ def check_deployment_blocking(
             return True
     return False
 
-@task(task_run_name="Add sub-deployments to deployment {deployment_model.name}")
+@task(task_run_name="Add sub-deployments to deployment.")
 def setup_sub_deployments_to_deployment_parameter(
     name: str,
     deployment_model: Union[DeploymentModel, list[DeploymentModel]],
@@ -154,7 +154,6 @@ def setup_sub_deployments_to_deployment_parameter(
         Bool: True if sub-deployments were added, False otherwise.
     """
     logger = get_run_logger()
-    logger.info(f"Adding sub-deployments to downstream deployment {deployment_model.name}")
     prefect_client = get_client()
     has_added = False
 
@@ -167,6 +166,7 @@ def setup_sub_deployments_to_deployment_parameter(
             )
         return has_added
     
+    logger.info(f"Adding sub-deployments to downstream deployment {deployment_model.name}")
     downstream_deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, deployment_model.name)
     ).result()
