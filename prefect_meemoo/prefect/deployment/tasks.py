@@ -276,10 +276,11 @@ def toggle_deployment_parameter_active(
     
     deployment_model = DeploymentModel(**current_value)
     deployment_model.active = not deployment_model.active
-    deployment.parameters[deployment_model_parameter] = deployment_model.dict()
-    
-    from_sync.call_soon_in_loop_thread(
-        create_call(prefect_client.update_deployment, deployment)
+    change_deployment_parameters.fn(
+        name=name,
+        parameters={
+            deployment_model_parameter: deployment_model.dict()
+        }
     )
     
     logger.info(f"Toggled active status of parameter {deployment_model_parameter} in deployment {name} to {deployment_model.active}")
