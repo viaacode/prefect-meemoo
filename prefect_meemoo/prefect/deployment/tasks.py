@@ -248,7 +248,7 @@ def propagate_sub_deployment_parameters(
 @task(task_run_name="Toggle deployment parameter active status")
 def toggle_deployment_parameter_active(
     name: str,
-    deployment_model_parameter: str | list[str],
+    deployment_model_parameter: Union[str , list[str]],
     value: bool = None
 ) -> bool:
     """
