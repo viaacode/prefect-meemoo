@@ -248,17 +248,33 @@ def propagate_sub_deployment_parameters(
 @task(task_run_name="Toggle deployment parameter active status")
 def toggle_deployment_parameter_active(
     name: str,
-    deployment_model_parameter: str,
+    deployment_model_parameter: str | list[str],
+    value: bool = None
 ) -> bool:
     """
     Toggle the active status of a deployment parameter.
     Args:
         name (str): The name of the deployment.
         deployment_model_parameter (str): The parameter name of the deployment to toggle.
+        value (bool, optional): If provided, set the active status to this value. If None, toggle the current active status.
     Returns:
         bool: True if the active status was toggled, False otherwise.
     """
     logger = get_run_logger()
+    if isinstance(deployment_model_parameter, list):
+        returns = []
+        for param in deployment_model_parameter:
+            returns.append(
+                toggle_deployment_parameter_active(
+                    name=name,
+                    deployment_model_parameter=param,
+                    value=value
+                )
+            )
+        if all(returns):
+            return True
+        return False
+    
     prefect_client = get_client()
     deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, name)
@@ -276,6 +292,8 @@ def toggle_deployment_parameter_active(
     
     deployment_model = DeploymentModel(**current_value)
     deployment_model.active = not deployment_model.active
+    if value is not None:
+        deployment_model.active = value
     change_deployment_parameters.fn(
         name=name,
         parameters={
