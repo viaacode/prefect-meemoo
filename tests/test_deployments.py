@@ -7,7 +7,9 @@ from prefect_meemoo.prefect.deployment import (
     check_deployment_last_flow_run_failed,
     DeploymentModel,
     check_deployment_blocking,
-    setup_sub_deployments_to_deployment_parameter
+    setup_sub_deployments_to_deployment_parameter,
+    toggle_deployment_parameter_active,
+    get_deployment_parameter
 )
 from prefect import flow, task, get_run_logger
 from prefect.client.schemas.filters import FlowRunFilter
@@ -295,3 +297,74 @@ def test_add_sub_depl_2():
     run_deployment(
         "test_deployment_sub_deployment_parent_2/sub-deployment-parent-2",
     )
+@flow(name="test_flow_with_deployment_parameter")
+def flow_with_deployment_parameter(
+    deployment_param = DeploymentModel(
+        name="sth/sth-dep",
+        active=True,
+        is_blocking=False,
+        sub_deployments=[],
+        full_sync=False,
+    )
+):
+    """
+    Flow that uses a deployment parameter.
+    """
+    logger = get_run_logger()
+    logger.info(f"Running flow with deployment parameter active: {deployment_param.active}")
+    return
+
+@flow(name="test_toggle_deployment_parameter_active")
+def toggling_flow():
+    """
+    Flow that toggles the active state of a deployment parameter.
+    """
+    logger = get_run_logger()
+    logger.info("Toggling deployment parameter active state.")
+    active_state_1 = get_deployment_parameter.submit(
+        name="test_flow_with_deployment_parameter/test-deployment-parameter",
+        parameter_name="deployment_param",
+    ).result()["active"]
+    toggle_on = None
+    if active_state_1 is not True:
+        toggle_on = toggle_deployment_parameter_active.submit(
+            name="test_flow_with_deployment_parameter/test-deployment-parameter",
+            deployment_model_parameter="deployment_param",
+            wait_for=[active_state_1]
+        )
+        sleeping_first = sleep_task.submit(5, wait_for=[toggle_on])  # Simulate some delay for the toggle to take effect
+        active_state_1 = get_deployment_parameter.submit(
+            name="test_flow_with_deployment_parameter/test-deployment-parameter",
+            parameter_name="deployment_param",
+            wait_for=[sleeping_first]
+        ).result()["active"]
+    assert active_state_1 is True, "Deployment parameter should be active after toggling."
+    toggle = toggle_deployment_parameter_active.submit(
+        name="test_flow_with_deployment_parameter/test-deployment-parameter",
+        deployment_model_parameter="deployment_param",
+        wait_for=[active_state_1, toggle_on]
+    )
+    sleeping = sleep_task.submit(5, wait_for=[toggle])  # Simulate some delay for the toggle to take effect
+    active_state = get_deployment_parameter.submit(
+        name="test_flow_with_deployment_parameter/test-deployment-parameter",
+        parameter_name="deployment_param",
+        wait_for=[sleeping]
+    ).result()["active"]
+    assert active_state is False, "Deployment parameter should be inactive after toggling."
+    return
+
+@pytest.mark.asyncio
+async def test_toggle_deployment_parameter_active():
+    """
+    Test the toggle_deployment_parameter_active function.
+    """
+    deployment = await Deployment.build_from_flow(
+        flow=flow_with_deployment_parameter,
+        name="test-deployment-parameter",
+        work_queue_name="default",
+    )
+    await deployment.apply()
+    print(f"Deployment created: {deployment}")
+
+    toggling_flow()
+    
