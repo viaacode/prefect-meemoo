@@ -245,6 +245,46 @@ def propagate_sub_deployment_parameters(
                     )
                     break
 
+@task(task_run_name="Toggle deployment parameter active status")
+def toggle_deployment_parameter_active(
+    name: str,
+    deployment_model_parameter: str,
+) -> bool:
+    """
+    Toggle the active status of a deployment parameter.
+    Args:
+        name (str): The name of the deployment.
+        deployment_model_parameter (str): The parameter name of the deployment to toggle.
+    Returns:
+        bool: True if the active status was toggled, False otherwise.
+    """
+    logger = get_run_logger()
+    prefect_client = get_client()
+    deployment = from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.read_deployment_by_name, name)
+    ).result()
+    
+    if deployment_model_parameter not in deployment.parameters:
+        logger.warning(f"Parameter {deployment_model_parameter} not found in deployment {name}")
+        return False
+    
+    current_value = deployment.parameters[deployment_model_parameter]
+    
+    if not is_deployment_model(current_value):
+        logger.error(f"Parameter {deployment_model_parameter} is not a DeploymentModel.")
+        raise ValueError(f"Parameter {deployment_model_parameter} is not a DeploymentModel.")
+    
+    deployment_model = DeploymentModel(**current_value)
+    deployment_model.active = not deployment_model.active
+    deployment.parameters[deployment_model_parameter] = deployment_model.dict()
+    
+    from_sync.call_soon_in_loop_thread(
+        create_call(prefect_client.update_deployment, deployment)
+    )
+    
+    logger.info(f"Toggled active status of parameter {deployment_model_parameter} in deployment {name} to {deployment_model.active}")
+    return True
+
 def check_deployment_running_flows(
     name: str,
     max_running: int = 0
