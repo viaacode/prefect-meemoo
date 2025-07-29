@@ -41,42 +41,39 @@ def sync_etl_service(api_server: str, api_route: str, last_modified: str):
         logger.info(f"Start full sync on {api_server}{api_route}")
         payload = {"full_sync": "True"}
 
-    try:
-        res = requests.post(
-            f"{api_server}{api_route}",
-            headers={"Content-Type": "application/json", "accept": "application/json"},
-            json=payload,
+    res_post = requests.post(
+        f"{api_server}{api_route}",
+        headers={"Content-Type": "application/json", "accept": "application/json"},
+        json=payload,
+    )
+
+    if not res_post.ok:
+        logger.error(f"{api_server}{api_route} sync request failed: {res_post.text}")
+        raise ConnectionError(
+            f"Failed to run ETL service at {api_server}{api_route} with status code {res_post.status_code}"
         )
+    else:
+        logger.info(f"{api_server}{api_route} sync request successful: {res_post.text}")
 
-        if not res.ok:
-            logger.error(f"{api_server}{api_route} sync request failed: {res.text}")
-            raise ConnectionError(
-                f"Failed to run ETL service at {api_server}{api_route} with status code {res.status_code}"
-            )
-        else:
-            logger.info(f"{api_server}{api_route} sync request successful: {res.text}")
+    running = True
+    while running:
+        res_get = requests.get(f"{api_server}{api_route}")
+        if not res_get.ok:
+            logger.error(f"{api_server}{api_route} poll request failed: {res_get.text}")
+            return Failed()
 
-        running = True
-        while running:
-            res = requests.get(f"{api_server}{api_route}")
-            if not res.ok:
-                logger.error(f"{api_server}{api_route} poll request failed: {res.text}")
-                return Failed()
+        json_result = res_get.json()
 
-            json_result = res.json()
+        if "job_running" not in json_result:
+            logger.error(f"{api_server}{api_route} 'job_running' parameter not found in poll response. Result JSON: {json_result}")
+            return Failed()
 
-            if "job_running" not in json_result:
-                logger.error(f"{api_server}{api_route} 'job_running' parameter not found in poll response. Result JSON: {json_result}")
-                return Failed()
+        running = json_result["job_running"]
+        # https://github.com/PrefectHQ/prefect/issues/5635
+        # import subprocess
+        # subprocess.Popen("prefect flow-run ls >/dev/null", shell=True)
+        time.sleep(STATUS_DELAY)
 
-            running = json_result["job_running"]
-            # https://github.com/PrefectHQ/prefect/issues/5635
-            # import subprocess
-            # subprocess.Popen("prefect flow-run ls >/dev/null", shell=True)
-            time.sleep(STATUS_DELAY)
+    logger.info(f"{api_server}{api_route} sync completed; Service response: {res_post.text}")
+    return datetime.now()
 
-        logger.info(f"{api_server}{api_route} sync completed; Service response: {res.text}")
-        return datetime.now()
-    except ConnectionError as ce:
-        logger.error(f"Connection error {ce}")
-        return Failed()

@@ -8,6 +8,7 @@ from prefect_meemoo.prefect.deployment.tasks import (
     check_deployment_running_flows,
     check_deployment_last_flow_run_failed,
     propagate_sub_deployment_parameters,
+    toggle_deployment_parameter_active
 )
 
 from prefect_meemoo.prefect.deployment.models import DeploymentModel, SubDeploymentModel
