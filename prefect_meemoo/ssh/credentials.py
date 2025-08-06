@@ -5,7 +5,7 @@ from prefect.blocks.core import Block
 from prefect import get_run_logger
 from pydantic import SecretStr
 from pydantic import Field
-from paramiko import SSHClient
+from paramiko import SSHClient, AutoAddPolicy
 
 
 class SSHCredentials(Block):
@@ -47,7 +47,7 @@ class SSHCredentials(Block):
             "v" + version("prefect-meemoo"),
         ]
 
-    def get_client(self) -> SSHClient:
+    def get_client(self, auto_add_policy=False) -> SSHClient:
         """
         Helper method to get a SSH client and establish a connection.
 
@@ -57,6 +57,8 @@ class SSHCredentials(Block):
 
         client = SSHClient()
         client.load_system_host_keys()
+        if auto_add_policy:
+            client.set_missing_host_key_policy(AutoAddPolicy())
         try:
             client.connect(
                 hostname=self.hostname,
