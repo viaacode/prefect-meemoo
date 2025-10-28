@@ -28,9 +28,9 @@ class APICredentials(Block):
     _block_type_name = "API credentials"
 
     url: str = Field(default=(...), description="API URL.")
-    authentication_url: Optional[str] = Field(default=(...), description="API authentication URL, if applicable.")
-    username: Optional[str] = Field(default=(...), description="API username, if applicable.")
-    password: Optional[SecretStr] = Field(default=(...), description="API password, if applicable.")
+    authentication_url: Optional[str] = Field(default=None, description="API authentication URL, if applicable.")
+    username: Optional[str] = Field(default=None, description="API username, if applicable.")
+    password: Optional[SecretStr] = Field(default=None, description="API password, if applicable.")
 
     try:
         _block_schema_capabilities = ["meemoo-prefect", "credentials", os.environ["BUILD_CONFIG_NAME"]]
