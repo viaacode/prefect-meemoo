@@ -12,3 +12,5 @@ blocks:
     requirements: requirements-rabbitmq.txt
   - path: prefect_meemoo/ssh/credentials.py
     requirements: requirements-ssh.txt
+  - path: prefect_meemoo/api/credentials.py
+    requirements: requirements.txt
