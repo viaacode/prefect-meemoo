@@ -7,4 +7,10 @@ ARG PIP_ARGS
 
 WORKDIR /opt/prefect
 COPY . .
-RUN pip install -r ./requirements-deploy.txt ${PIP_ARGS}
+RUN pip install -r requirements-deploy.txt ${PIP_ARGS}
+RUN pip install -r requirements-elasticsearch.txt ${PIP_ARGS}
+RUN pip install -r requirements-mediahaven.txt ${PIP_ARGS}
+RUN pip install -r requirements-triplydb.txt ${PIP_ARGS}
+RUN pip install -r requirements-config.txt ${PIP_ARGS}
+RUN pip install -r requirements-rabbitmq.txt ${PIP_ARGS}
+RUN pip install -r requirements-ssh.txt ${PIP_ARGS}

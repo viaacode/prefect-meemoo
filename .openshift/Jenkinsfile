@@ -14,6 +14,7 @@ pipeline {
         REGISTRY = 'default-route-openshift-image-registry.meemoo2-2bc857e5f10eb63ab790a3a1d19a696c-i000.eu-de.containers.appdomain.cloud'
         REGISTRY_SCHEMA = "https://$REGISTRY"
         REGISTRY_CREDENTIAL = 'docker-reg'
+        PIP_ARGS="--extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be"
     }
 
     stages {
@@ -104,7 +105,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.build("prefect-meemoo:$GIT_SHORT_COMMIT")
+                    docker.build("prefect-meemoo:$GIT_SHORT_COMMIT", "--build-arg \"PIP_ARGS='${PIP_ARGS}'\"")
                 }
             }
         }
