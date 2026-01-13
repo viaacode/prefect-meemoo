@@ -201,6 +201,7 @@ void runInPrefectContainer(String commands) {
     println("$commands")
     docker.build("prefect-meemoo:$GIT_SHORT_COMMIT").inside("-e PREFECT_API_URL=$PREFECT_API") {
         sh """#!/bin/bash
+        set -e
         $commands
         """
     }
