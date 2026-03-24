@@ -125,19 +125,19 @@ pipeline {
 
             }
         }
-        // stage('Blocks: Register prefect block types') {
-        //     when {
-        //         buildingTag()
-        //     }
-        //     steps {
-        //         script {
-        //             def blocks = readYaml file: '.openshift/blocks.yaml'
-        //             for (block in blocks.blocks) {
-        //                 runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Blocks: Register prefect block types') {
+            when {
+                buildingTag()
+            }
+            steps {
+                script {
+                    def blocks = readYaml file: '.openshift/blocks.yaml'
+                    for (block in blocks.blocks) {
+                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                    }
+                }
+            }
+        }
     }
     post {
         success {
