@@ -50,7 +50,7 @@ def change_deployment_parameters(
         deployment.parameters[key] = value
     from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.update_deployment, deployment)
-    )
+    ).result()
     return
 
 async def task_failure_hook_change_deployment_parameters(
