@@ -38,12 +38,11 @@ def change_deployment_parameters(
     Change the parameters of a deployment.
     """
     logger = get_run_logger()
-    logger.info(f"Changing deployment {name} parameters to {parameters}")
+    logger.info(f"Updating deployment {name} parameters.")
     prefect_client = get_client()
     deployment = from_sync.call_soon_in_loop_thread(
         create_call(prefect_client.read_deployment_by_name, name)
     ).result()
-    logger.info(f"Current parameters: {deployment.parameters}")
     for key, value in parameters.items():
         if key not in deployment.parameters:
             logger.warning(f"Parameter {key} not found in deployment {name}")
