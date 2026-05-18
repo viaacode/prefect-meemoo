@@ -15,6 +15,7 @@ pipeline {
         REGISTRY_SCHEMA = "https://$REGISTRY"
         REGISTRY_CREDENTIAL = 'docker-reg'
         PIP_ARGS="--extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be"
+        PYPI_URL="http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/"
     }
 
     stages {
@@ -100,12 +101,10 @@ pipeline {
             }
         }
         stage('Build image') {
-            when {
-                buildingTag()
-            }
             steps {
                 script {
-                    docker.build("prefect-meemoo:$GIT_SHORT_COMMIT", "--build-arg \"PIP_ARGS='${PIP_ARGS}'\"")
+                    // The jenkins docker plugin doesn't provide the `--build-arg` option
+                    sh "docker build . -t prefect-meemoo:$GIT_SHORT_COMMIT --build-arg PIP_ARGS='$PIP_ARGS' "
                 }
             }
         }
@@ -118,7 +117,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
                         runInPrefectContainer("""
                             python setup.py sdist bdist_wheel --new-version ${BUILD_CONFIG_NAME}
-                            twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive
+                            twine upload dist/* --repository-url ${PYPI_URL} -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive
                         """)
                                     
                     }
@@ -134,7 +133,7 @@ pipeline {
                 script {
                     def blocks = readYaml file: '.openshift/blocks.yaml'
                     for (block in blocks.blocks) {
-                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                        runInPrefectContainer("prefect blocks register -f ${block.path}")
                     }
                 }
             }
@@ -180,27 +179,26 @@ void setGitHubBuildStatus(String message, String state) {
     ])
 }
 void getPrefectApiAndVersion(String deploy_env) {
-    String prefect_api = ''
     env.DEPLOYMENT_ENV = deploy_env
     switch (deploy_env) {
         case 'int':
-            env.PREFECT_API = "${PREFECT_URL_V3_TST}"
+            env.PREFECT_API_URL = "${PREFECT_URL_V3_TST}"
             break
         case 'qas':
-            env.PREFECT_API = "${PREFECT_URL_QAS}"
+            env.PREFECT_API_URL = "${PREFECT_URL_QAS}"
             break
         case 'prd':
-            env.PREFECT_API = "${PREFECT_URL_PRD}"
+            env.PREFECT_API_URL = "${PREFECT_URL_PRD}"
             break
         default:
             break
     }
-    response = sh(returnStdout: true, script:"curl $PREFECT_API/admin/version").trim().split('"')
+    def response = sh(returnStdout: true, script:"curl $PREFECT_API_URL/admin/version").trim().split('"')
     env.PREFECT_VERSION = response[1]
 }
 void runInPrefectContainer(String commands) {
     println("$commands")
-    docker.build("prefect-meemoo:$GIT_SHORT_COMMIT").inside("-e PREFECT_API_URL=$PREFECT_API") {
+    docker.image("prefect-meemoo:$GIT_SHORT_COMMIT").inside {
         sh """#!/bin/bash
         set -e
         $commands
