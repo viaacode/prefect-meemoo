@@ -14,6 +14,8 @@ pipeline {
         REGISTRY = 'default-route-openshift-image-registry.meemoo2-2bc857e5f10eb63ab790a3a1d19a696c-i000.eu-de.containers.appdomain.cloud'
         REGISTRY_SCHEMA = "https://$REGISTRY"
         REGISTRY_CREDENTIAL = 'docker-reg'
+        PIP_ARGS="--extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be"
+        PYPI_URL="http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/"
     }
 
     stages {
@@ -98,19 +100,26 @@ pipeline {
                 }
             }
         }
-        stage('Test code') {
+        stage('Build image') {
             steps {
-                sh 'echo "No tests implemented"'
+                script {
+                    // The jenkins docker plugin doesn't provide the `--build-arg` option
+                    sh "docker build . -t prefect-meemoo:$GIT_SHORT_COMMIT --build-arg PIP_ARGS='$PIP_ARGS' "
+                }
             }
         }
-        stage('Package: Build and publish python package') {
+        stage('Publish package') {
             when {
                 buildingTag()
             }
             steps {
                 script {
                     withCredentials([string(credentialsId: 'nexus_username', variable: 'NEXUS_USERNAME'), string(credentialsId: 'nexus_password', variable: 'NEXUS_PASSWORD')]) {
-                        runInPrefectContainer("python setup.py sdist bdist_wheel --new-version ${BUILD_CONFIG_NAME}", "requirements-deploy.txt" , "twine upload dist/* --repository-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-internal/ -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive")
+                        runInPrefectContainer("""
+                            python setup.py sdist bdist_wheel --new-version ${BUILD_CONFIG_NAME}
+                            twine upload dist/* --repository-url ${PYPI_URL} -u ${NEXUS_USERNAME} -p ${NEXUS_PASSWORD} --non-interactive
+                        """)
+                                    
                     }
                 }
 
@@ -124,44 +133,8 @@ pipeline {
                 script {
                     def blocks = readYaml file: '.openshift/blocks.yaml'
                     for (block in blocks.blocks) {
-                        runInPrefectContainer("prefect blocks register -f ${block.path}", "${block.requirements}") 
+                        runInPrefectContainer("prefect blocks register -f ${block.path}")
                     }
-                }
-            }
-        }
-        stage('Test flows: Build and push docker') {
-            when {
-                buildingTag()
-            }
-            steps {
-                script {
-                    dockerImage = docker.build("$REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT", "-f tests/flows/Dockerfile --build-arg PREFECT_VERSION=$PREFECT_VERSION .")
-                    docker.withRegistry(REGISTRY_SCHEMA, REGISTRY_CREDENTIAL) {
-                        dockerImage.push()
-                    }
-                }
-            }
-        }
-        stage('Test flows: Build Python Infra Block') {
-            when {
-                buildingTag()
-            }
-            steps {
-                script {
-                    runInPrefectContainer("python tests/flows/infra_block.py --image $REGISTRY/prefect/prefect-meemoo-test-flows:$GIT_SHORT_COMMIT --name prefect-meemoo-test-flows-$DEPLOYMENT_ENV --registry docker-registry --package_version ${BUILD_CONFIG_NAME}")
-                }
-            }
-        }
-        stage('Test flows: Build and apply prefect deployment') {
-            when {
-                buildingTag()
-            }
-            steps {
-                script {
-                    def flows = readYaml file: '.openshift/flows.yaml'
-                    for (flow in flows.flows) {
-                        runInPrefectContainer("prefect deployment build tests/flows/${flow.filename}:${flow.function} -n ${flow.name}-$DEPLOYMENT_ENV -ib docker-container/prefect-meemoo-test-flows-$DEPLOYMENT_ENV --skip-upload -q $PREFECT_QUEUE -t ${BUILD_CONFIG_NAME} --apply")
-                    }                
                 }
             }
         }
@@ -206,33 +179,29 @@ void setGitHubBuildStatus(String message, String state) {
     ])
 }
 void getPrefectApiAndVersion(String deploy_env) {
-    String prefect_api = ''
     env.DEPLOYMENT_ENV = deploy_env
     switch (deploy_env) {
         case 'int':
-            env.PREFECT_API = "${PREFECT_URL_INT}"
+            env.PREFECT_API_URL = "${PREFECT_URL_V3_TST}"
             break
         case 'qas':
-            env.PREFECT_API = "${PREFECT_URL_QAS}"
+            env.PREFECT_API_URL = "${PREFECT_URL_QAS}"
             break
         case 'prd':
-            env.PREFECT_API = "${PREFECT_URL_PRD}"
+            env.PREFECT_API_URL = "${PREFECT_URL_PRD}"
             break
         default:
             break
     }
-    response = sh(returnStdout: true, script:"curl $PREFECT_API/admin/version").trim().split('"')
+    def response = sh(returnStdout: true, script:"curl $PREFECT_API_URL/admin/version").trim().split('"')
     env.PREFECT_VERSION = response[1]
 }
-void runInPrefectContainer(String commands, String requirements_file = 'requirements.txt', post_commands = '') {
-    println("$PREFECT_VERSION-python3.9")
+void runInPrefectContainer(String commands) {
     println("$commands")
-    docker.image("${BASE_IMG_NAME}:$PREFECT_VERSION-python3.9").inside("-e PREFECT_API_URL=$PREFECT_API") {
+    docker.image("prefect-meemoo:$GIT_SHORT_COMMIT").inside {
         sh """#!/bin/bash
-        pip3 install -r $requirements_file --extra-index-url http://do-prd-mvn-01.do.viaa.be:8081/repository/pypi-all/simple --trusted-host do-prd-mvn-01.do.viaa.be
-        unset HTTPS_PROXY HTTP_PROXY http_proxy https_proxy
+        set -e
         $commands
-        $post_commands
         """
     }
 }
