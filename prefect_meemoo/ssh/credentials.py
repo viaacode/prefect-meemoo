@@ -1,10 +1,9 @@
 import os
 from importlib.metadata import version
 
-from prefect.blocks.core import Block
+from prefect.blocks.core import Block, SecretStr
 from prefect import get_run_logger
-from pydantic import SecretStr
-from pydantic import Field
+from pydantic.v1 import Field
 from paramiko import SSHClient, AutoAddPolicy
 
 

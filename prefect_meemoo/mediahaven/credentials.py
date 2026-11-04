@@ -4,7 +4,7 @@ from importlib.metadata import version
 from mediahaven import MediaHaven
 from mediahaven.oauth2 import ROPCGrant
 from prefect.blocks.core import Block, SecretStr
-from pydantic import Field
+from pydantic.v1 import Field
 
 
 class MediahavenCredentials(Block):

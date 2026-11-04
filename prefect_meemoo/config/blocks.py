@@ -5,7 +5,7 @@ import pendulum
 from dateutil import parser
 from prefect.blocks.core import Block, SecretStr
 from prefect.runtime import flow_run
-from pydantic import Field
+from pydantic.v1 import Field
 
 
 class LastRunConfig(Block):

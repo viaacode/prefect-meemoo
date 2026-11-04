@@ -4,7 +4,7 @@ from importlib.metadata import version
 import urllib3
 from elasticsearch import Elasticsearch
 from prefect.blocks.core import Block, SecretStr
-from pydantic import Field
+from pydantic.v1 import Field
 
 
 class ElasticsearchCredentials(Block):
