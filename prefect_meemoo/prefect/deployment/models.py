@@ -1,4 +1,4 @@
-from pydantic import BaseModel, AnyUrl
+from pydantic import BaseModel
 
 class SubDeploymentModel(BaseModel):
     """

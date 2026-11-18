@@ -1,5 +1,5 @@
 from prefect.blocks.core import Block, SecretStr
-from pydantic import Field
+from pydantic.v1 import Field
 
 
 class RabbitMQCredentials(Block):

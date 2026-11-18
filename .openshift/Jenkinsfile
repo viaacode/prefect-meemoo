@@ -182,7 +182,6 @@ pipeline {
             }
         }
         always {
-            jiraSendBuildInfo site: "${JIRA_URL}"
             // Archive test results
             script {
                 sh "docker image prune -af"
